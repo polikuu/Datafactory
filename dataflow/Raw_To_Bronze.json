@@ -51,9 +51,10 @@
 				"          ingestdate = currentDate()) ~> MetaData",
 				"MetaData sink(allowSchemaDrift: true,",
 				"     validateSchema: true,",
+				"     format: 'parquet',",
 				"     skipDuplicateMapInputs: true,",
 				"     skipDuplicateMapOutputs: true,",
-				"     saveOrder: 1,",
+				"     saveOrder: 0,",
 				"     partitionBy('hash', 1)) ~> SaveToBronze"
 			]
 		}

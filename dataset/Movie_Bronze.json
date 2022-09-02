@@ -5,14 +5,20 @@
 			"referenceName": "MovieBlobStorage",
 			"type": "LinkedServiceReference"
 		},
+		"folder": {
+			"name": "Movie"
+		},
 		"annotations": [],
-		"type": "Json",
+		"type": "Parquet",
 		"typeProperties": {
 			"location": {
-				"type": "AzureBlobStorageLocation",
-				"container": "etloutput"
-			}
+				"type": "AzureBlobFSLocation",
+				"folderPath": "result/bronze",
+				"fileSystem": "root"
+			},
+			"compressionCodec": "snappy"
 		},
-		"schema": {}
-	}
+		"schema": []
+	},
+	"type": "Microsoft.DataFactory/factories/datasets"
 }
