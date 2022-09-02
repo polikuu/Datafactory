@@ -14,9 +14,9 @@
 			],
 			"sinks": [
 				{
-					"linkedService": {
-						"referenceName": "MovieBlobStorage",
-						"type": "LinkedServiceReference"
+					"dataset": {
+						"referenceName": "Movie_Bronze",
+						"type": "DatasetReference"
 					},
 					"name": "SaveToBronze"
 				}
@@ -51,9 +51,8 @@
 				"          ingestdate = currentDate()) ~> MetaData",
 				"MetaData sink(allowSchemaDrift: true,",
 				"     validateSchema: true,",
-				"     format: 'parquet',",
-				"     compressionCodec: 'none',",
 				"     skipDuplicateMapInputs: true,",
+				"     skipDuplicateMapOutputs: true,",
 				"     saveOrder: 1,",
 				"     partitionBy('hash', 1)) ~> SaveToBronze"
 			]
