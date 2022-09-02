@@ -1,0 +1,275 @@
+{
+	"name": "BronzeToSilver",
+	"properties": {
+		"type": "MappingDataFlow",
+		"typeProperties": {
+			"sources": [
+				{
+					"dataset": {
+						"referenceName": "Movie_Bronze",
+						"type": "DatasetReference"
+					},
+					"name": "IngestBronze"
+				}
+			],
+			"sinks": [
+				{
+					"dataset": {
+						"referenceName": "Genres_silver",
+						"type": "DatasetReference"
+					},
+					"name": "saveSilverGenres"
+				},
+				{
+					"dataset": {
+						"referenceName": "Movie_silver",
+						"type": "DatasetReference"
+					},
+					"name": "saveSilverMovie"
+				},
+				{
+					"dataset": {
+						"referenceName": "Language_silver",
+						"type": "DatasetReference"
+					},
+					"name": "saveSilverLanguage"
+				},
+				{
+					"dataset": {
+						"referenceName": "Movie_Bronze",
+						"type": "DatasetReference"
+					},
+					"name": "saveBronzeMoive",
+					"description": "save Bronze table for clean movie dataset (loaded)"
+				}
+			],
+			"transformations": [
+				{
+					"name": "bronzeDF",
+					"description": "SelectValueColumn"
+				},
+				{
+					"name": "bronzeAgumentedDFMovie",
+					"description": "Creating/updating the columns 'value, Id, Budget, Revenue, RunTime, Price, Title, Overview, Tagline, Imdburl, TmdbUrl, PosterUrl, BackdropUrl, ReleaseDate, p_CreatedDate, UpdatedDate, UpdatedBy, CreatedBy, Genres, Language_Id'.\n\nUpdating the minimum of Budget to 100,000"
+				},
+				{
+					"name": "flatten"
+				},
+				{
+					"name": "DistinctRowGenres"
+				},
+				{
+					"name": "filterNew"
+				},
+				{
+					"name": "split"
+				},
+				{
+					"name": "excludeValue"
+				},
+				{
+					"name": "selectLanguage"
+				},
+				{
+					"name": "selectGenres"
+				},
+				{
+					"name": "createKey"
+				},
+				{
+					"name": "DistinctRowLanguage"
+				},
+				{
+					"name": "litStatusLoaded"
+				},
+				{
+					"name": "DistinctRowMovie"
+				},
+				{
+					"name": "litStatusQuarantined"
+				},
+				{
+					"name": "DistinctRowMovieQ"
+				},
+				{
+					"name": "selectValueStatus"
+				},
+				{
+					"name": "join1"
+				},
+				{
+					"name": "selectBronzeColumn"
+				},
+				{
+					"name": "union1"
+				},
+				{
+					"name": "select1"
+				}
+			],
+			"scriptLines": [
+				"source(output(",
+				"          value as (BackdropUrl as string, Budget as double, CreatedBy as string, CreatedDate as string, Id as short, ImdbUrl as string, OriginalLanguage as string, Overview as string, PosterUrl as string, Price as double, ReleaseDate as string, Revenue as double, RunTime as short, Tagline as string, Title as string, TmdbUrl as string, UpdatedBy as string, UpdatedDate as string, genres as (id as short, name as string)[]),",
+				"          datasource as string,",
+				"          ingesttime as timestamp,",
+				"          status as string,",
+				"          ingestdate as date",
+				"     ),",
+				"     allowSchemaDrift: true,",
+				"     validateSchema: false,",
+				"     inferDriftedColumnTypes: true,",
+				"     ignoreNoFilesFound: false,",
+				"     format: 'parquet') ~> IngestBronze",
+				"filterNew select(mapColumn(",
+				"          value",
+				"     ),",
+				"     skipDuplicateMapInputs: true,",
+				"     skipDuplicateMapOutputs: true) ~> bronzeDF",
+				"select1 derive(value = value,",
+				"          Budget = case(Budget < 100000, 100000, toInteger(value.Budget)),",
+				"          ReleaseDate = toDate(ReleaseDate),",
+				"          CreatedDate = toDate(CreatedDate),",
+				"          Language_Id = 1) ~> bronzeAgumentedDFMovie",
+				"selectGenres select(mapColumn(",
+				"          id = genres[1].id,",
+				"          name = genres[1].name",
+				"     ),",
+				"     skipDuplicateMapInputs: true,",
+				"     skipDuplicateMapOutputs: true) ~> flatten",
+				"flatten aggregate(groupBy(id),",
+				"     each(match(name!=\"id\"), $$ = first($$))) ~> DistinctRowGenres",
+				"IngestBronze filter(status == \"new\") ~> filterNew",
+				"bronzeAgumentedDFMovie split(RunTime >= 0,",
+				"     disjoint: false) ~> split@(silverMovieClean, silverMovieQuarantined)",
+				"DistinctRowMovie select(mapColumn(",
+				"          Id,",
+				"          Budget,",
+				"          Revenue,",
+				"          RunTime,",
+				"          Price,",
+				"          Title,",
+				"          Overview,",
+				"          Tagline,",
+				"          ImdbUrl,",
+				"          TmdbUrl,",
+				"          PosterUrl,",
+				"          BackdropUrl,",
+				"          ReleaseDate,",
+				"          p_CreatedDate = CreatedDate,",
+				"          UpdatedDate,",
+				"          UpdatedBy,",
+				"          CreatedBy,",
+				"          Genres_Id = genres[1].id,",
+				"          Language_Id",
+				"     ),",
+				"     skipDuplicateMapInputs: true,",
+				"     skipDuplicateMapOutputs: true) ~> excludeValue",
+				"bronzeDF select(mapColumn(",
+				"          Language = value.OriginalLanguage",
+				"     ),",
+				"     skipDuplicateMapInputs: true,",
+				"     skipDuplicateMapOutputs: true) ~> selectLanguage",
+				"bronzeDF select(mapColumn(",
+				"          genres = value.genres",
+				"     ),",
+				"     skipDuplicateMapInputs: true,",
+				"     skipDuplicateMapOutputs: true) ~> selectGenres",
+				"selectLanguage window(over(Language),",
+				"     asc(Language, true),",
+				"     Id = rank()) ~> createKey",
+				"createKey aggregate(groupBy(Id),",
+				"     each(match(name!=\"Id\"), $$ = first($$))) ~> DistinctRowLanguage",
+				"DistinctRowMovie derive(status = \"loaded\") ~> litStatusLoaded",
+				"split@silverMovieClean aggregate(groupBy(Id),",
+				"     each(match(name!=\"Id\"), $$ = first($$))) ~> DistinctRowMovie",
+				"DistinctRowMovieQ derive(status = \"quarantined\") ~> litStatusQuarantined",
+				"split@silverMovieQuarantined aggregate(groupBy(Id),",
+				"     each(match(name!=\"Id\"), $$ = first($$))) ~> DistinctRowMovieQ",
+				"union1 select(mapColumn(",
+				"          value,",
+				"          status",
+				"     ),",
+				"     skipDuplicateMapInputs: true,",
+				"     skipDuplicateMapOutputs: true) ~> selectValueStatus",
+				"selectValueStatus, IngestBronze join(selectValueStatus@value.Id == IngestBronze@value.Id,",
+				"     joinType:'inner',",
+				"     matchType:'exact',",
+				"     ignoreSpaces: false,",
+				"     broadcast: 'auto')~> join1",
+				"join1 select(mapColumn(",
+				"          value = selectValueStatus@value,",
+				"          datasource,",
+				"          ingesttime,",
+				"          status = selectValueStatus@status,",
+				"          ingestdate",
+				"     ),",
+				"     skipDuplicateMapInputs: true,",
+				"     skipDuplicateMapOutputs: true) ~> selectBronzeColumn",
+				"litStatusLoaded, litStatusQuarantined union(byName: false)~> union1",
+				"bronzeDF select(mapColumn(",
+				"          value,",
+				"          BackdropUrl = value.BackdropUrl,",
+				"          Budget = value.Budget,",
+				"          CreatedBy = value.CreatedBy,",
+				"          CreatedDate = value.CreatedDate,",
+				"          Id = value.Id,",
+				"          ImdbUrl = value.ImdbUrl,",
+				"          Overview = value.Overview,",
+				"          PosterUrl = value.PosterUrl,",
+				"          Price = value.Price,",
+				"          ReleaseDate = value.ReleaseDate,",
+				"          Revenue = value.Revenue,",
+				"          RunTime = value.RunTime,",
+				"          Tagline = value.Tagline,",
+				"          Title = value.Title,",
+				"          TmdbUrl = value.TmdbUrl,",
+				"          UpdatedBy = value.UpdatedBy,",
+				"          UpdatedDate = value.UpdatedDate,",
+				"          genres = value.genres",
+				"     ),",
+				"     skipDuplicateMapInputs: true,",
+				"     skipDuplicateMapOutputs: true) ~> select1",
+				"DistinctRowGenres sink(allowSchemaDrift: true,",
+				"     validateSchema: false,",
+				"     format: 'parquet',",
+				"     truncate: true,",
+				"     skipDuplicateMapInputs: true,",
+				"     skipDuplicateMapOutputs: true,",
+				"     saveOrder: 1,",
+				"     partitionBy('hash', 1),",
+				"     preCommands: ['rm -f /result/silver/Genres/*'],",
+				"     postCommands: []) ~> saveSilverGenres",
+				"excludeValue sink(allowSchemaDrift: true,",
+				"     validateSchema: false,",
+				"     format: 'parquet',",
+				"     truncate: true,",
+				"     skipDuplicateMapInputs: true,",
+				"     skipDuplicateMapOutputs: true,",
+				"     saveOrder: 3,",
+				"     partitionBy('hash', 1),",
+				"     preCommands: ['rm -f /result/silver/Movie/*'],",
+				"     postCommands: []) ~> saveSilverMovie",
+				"DistinctRowLanguage sink(allowSchemaDrift: true,",
+				"     validateSchema: false,",
+				"     format: 'parquet',",
+				"     truncate: true,",
+				"     skipDuplicateMapInputs: true,",
+				"     skipDuplicateMapOutputs: true,",
+				"     saveOrder: 2,",
+				"     partitionBy('hash', 1),",
+				"     preCommands: ['rm -f /result/silver/Language/*'],",
+				"     postCommands: []) ~> saveSilverLanguage",
+				"selectBronzeColumn sink(allowSchemaDrift: true,",
+				"     validateSchema: true,",
+				"     format: 'parquet',",
+				"     truncate: true,",
+				"     skipDuplicateMapInputs: true,",
+				"     skipDuplicateMapOutputs: true,",
+				"     saveOrder: 4,",
+				"     partitionBy('hash', 1),",
+				"     preCommands: [],",
+				"     postCommands: []) ~> saveBronzeMoive"
+			]
+		}
+	}
+}

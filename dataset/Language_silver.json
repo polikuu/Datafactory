@@ -1,0 +1,23 @@
+{
+	"name": "Language_silver",
+	"properties": {
+		"linkedServiceName": {
+			"referenceName": "MovieBlobStorage",
+			"type": "LinkedServiceReference"
+		},
+		"folder": {
+			"name": "Movie"
+		},
+		"annotations": [],
+		"type": "Parquet",
+		"typeProperties": {
+			"location": {
+				"type": "AzureBlobFSLocation",
+				"folderPath": "result/silver/Language",
+				"fileSystem": "root"
+			},
+			"compressionCodec": "snappy"
+		},
+		"schema": []
+	}
+}
