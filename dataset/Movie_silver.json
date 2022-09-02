@@ -13,6 +13,7 @@
 		"typeProperties": {
 			"location": {
 				"type": "AzureBlobFSLocation",
+				"folderPath": "result/silver/Movie",
 				"fileSystem": "etloutput"
 			},
 			"compressionCodec": "snappy"

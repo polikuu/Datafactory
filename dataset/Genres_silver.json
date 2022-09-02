@@ -13,6 +13,7 @@
 		"typeProperties": {
 			"location": {
 				"type": "AzureBlobFSLocation",
+				"folderPath": "result/silver/Genres",
 				"fileSystem": "etloutput"
 			},
 			"compressionCodec": "snappy"
