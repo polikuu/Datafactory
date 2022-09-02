@@ -1,0 +1,18 @@
+{
+	"name": "Movie_Bronze",
+	"properties": {
+		"linkedServiceName": {
+			"referenceName": "MovieBlobStorage",
+			"type": "LinkedServiceReference"
+		},
+		"annotations": [],
+		"type": "Json",
+		"typeProperties": {
+			"location": {
+				"type": "AzureBlobStorageLocation",
+				"container": "etloutput"
+			}
+		},
+		"schema": {}
+	}
+}

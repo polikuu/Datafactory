@@ -1,0 +1,40 @@
+{
+	"name": "Raw_To_Bronze",
+	"properties": {
+		"type": "MappingDataFlow",
+		"typeProperties": {
+			"sources": [
+				{
+					"dataset": {
+						"referenceName": "Movie_json",
+						"type": "DatasetReference"
+					},
+					"name": "InjestRawMovie"
+				}
+			],
+			"sinks": [
+				{
+					"dataset": {
+						"referenceName": "Movie_Bronze",
+						"type": "DatasetReference"
+					},
+					"name": "SaveToBronze"
+				}
+			],
+			"transformations": [],
+			"scriptLines": [
+				"source(output(",
+				"          movie as (Id as integer, Title as string, Overview as string, Tagline as string, Budget as double, Revenue as double, ImdbUrl as string, TmdbUrl as string, PosterUrl as string, BackdropUrl as string, OriginalLanguage as string, ReleaseDate as string, RunTime as integer, Price as double, CreatedDate as string, UpdatedDate as string, UpdatedBy as string, CreatedBy as string, genres as (id as integer, name as string)[])[]",
+				"     ),",
+				"     allowSchemaDrift: true,",
+				"     validateSchema: false,",
+				"     ignoreNoFilesFound: false,",
+				"     documentForm: 'arrayOfDocuments') ~> InjestRawMovie",
+				"InjestRawMovie sink(allowSchemaDrift: true,",
+				"     validateSchema: false,",
+				"     skipDuplicateMapInputs: true,",
+				"     skipDuplicateMapOutputs: true) ~> SaveToBronze"
+			]
+		}
+	}
+}
