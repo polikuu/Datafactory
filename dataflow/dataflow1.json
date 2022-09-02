@@ -52,10 +52,10 @@
 				"          ingestdate = currentDate()) ~> AddMetadata",
 				"AddMetadata sink(allowSchemaDrift: true,",
 				"     validateSchema: true,",
+				"     format: 'parquet',",
 				"     skipDuplicateMapInputs: true,",
 				"     skipDuplicateMapOutputs: true,",
 				"     partitionBy('hash', 1),",
-				"     format: 'parquet',",
 				"     preCommands: ['rm -f /result/bronze/*'],",
 				"     postCommands: []) ~> saveToBronze"
 			]
