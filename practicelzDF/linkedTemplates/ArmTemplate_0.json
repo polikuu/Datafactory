@@ -550,7 +550,11 @@
 								"referenceName": "Movie_Bronze",
 								"type": "DatasetReference"
 							},
-							"name": "SaveToBronze"
+							"name": "SaveToBronze",
+							"rejectedDataLinkedService": {
+								"referenceName": "MovieBlobStorage",
+								"type": "LinkedServiceReference"
+							}
 						}
 					],
 					"transformations": [
@@ -593,7 +597,8 @@
 			},
 			"dependsOn": [
 				"[concat(variables('factoryId'), '/datasets/Movie_json')]",
-				"[concat(variables('factoryId'), '/datasets/Movie_Bronze')]"
+				"[concat(variables('factoryId'), '/datasets/Movie_Bronze')]",
+				"[concat(variables('factoryId'), '/linkedServices/MovieBlobStorage')]"
 			]
 		},
 		{
