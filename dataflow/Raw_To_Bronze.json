@@ -18,7 +18,11 @@
 						"referenceName": "Movie_Bronze",
 						"type": "DatasetReference"
 					},
-					"name": "SaveToBronze"
+					"name": "SaveToBronze",
+					"rejectedDataLinkedService": {
+						"referenceName": "MovieBlobStorage",
+						"type": "LinkedServiceReference"
+					}
 				}
 			],
 			"transformations": [
