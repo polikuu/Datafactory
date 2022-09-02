@@ -46,6 +46,7 @@
 				"typeProperties": {
 					"location": {
 						"type": "AzureBlobFSLocation",
+						"folderPath": "result/silver/Genres",
 						"fileSystem": "etloutput"
 					},
 					"compressionCodec": "snappy"
@@ -73,6 +74,7 @@
 				"typeProperties": {
 					"location": {
 						"type": "AzureBlobFSLocation",
+						"folderPath": "result/silver/Language",
 						"fileSystem": "etloutput"
 					},
 					"compressionCodec": "snappy"
@@ -100,6 +102,7 @@
 				"typeProperties": {
 					"location": {
 						"type": "AzureBlobFSLocation",
+						"folderPath": "result/bronze",
 						"fileSystem": "etloutput"
 					},
 					"compressionCodec": "snappy"
@@ -231,6 +234,7 @@
 				"typeProperties": {
 					"location": {
 						"type": "AzureBlobFSLocation",
+						"folderPath": "result/silver/Movie",
 						"fileSystem": "etloutput"
 					},
 					"compressionCodec": "snappy"
