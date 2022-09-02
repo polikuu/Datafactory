@@ -14,9 +14,9 @@
 			],
 			"sinks": [
 				{
-					"dataset": {
-						"referenceName": "Movie_Bronze",
-						"type": "DatasetReference"
+					"linkedService": {
+						"referenceName": "MovieBlobStorage",
+						"type": "LinkedServiceReference"
 					},
 					"name": "SaveToBronze"
 				}
@@ -26,7 +26,7 @@
 					"name": "flattenValues"
 				},
 				{
-					"name": "derivedColumn1"
+					"name": "MetaData"
 				}
 			],
 			"scriptLines": [
@@ -48,11 +48,14 @@
 				"          datasource = \"antraMovie\",",
 				"          ingesttime = currentTimestamp(),",
 				"          status = \"New\",",
-				"          ingestdate = currentDate()) ~> derivedColumn1",
-				"derivedColumn1 sink(allowSchemaDrift: true,",
-				"     validateSchema: false,",
+				"          ingestdate = currentDate()) ~> MetaData",
+				"MetaData sink(allowSchemaDrift: true,",
+				"     validateSchema: true,",
+				"     format: 'parquet',",
+				"     compressionCodec: 'none',",
 				"     skipDuplicateMapInputs: true,",
-				"     skipDuplicateMapOutputs: true) ~> SaveToBronze"
+				"     saveOrder: 1,",
+				"     partitionBy('hash', 1)) ~> SaveToBronze"
 			]
 		}
 	}
