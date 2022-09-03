@@ -13,6 +13,7 @@
 		"typeProperties": {
 			"location": {
 				"type": "AzureBlobFSLocation",
+				"fileName": "part-00000-f778fd1c-36d4-46dc-824a-7f3eb5f02bc6-c000.snappy.parquet",
 				"folderPath": "result/bronze",
 				"fileSystem": "etloutput"
 			},
