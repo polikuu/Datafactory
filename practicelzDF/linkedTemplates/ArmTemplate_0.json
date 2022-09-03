@@ -58,6 +58,32 @@
 			]
 		},
 		{
+			"name": "[concat(parameters('factoryName'), '/Json1')]",
+			"type": "Microsoft.DataFactory/factories/datasets",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "MovieBlobStorage",
+					"type": "LinkedServiceReference"
+				},
+				"folder": {
+					"name": "Movie"
+				},
+				"annotations": [],
+				"type": "Json",
+				"typeProperties": {
+					"location": {
+						"type": "AzureBlobStorageLocation",
+						"container": "etloutput"
+					}
+				},
+				"schema": {}
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/linkedServices/MovieBlobStorage')]"
+			]
+		},
+		{
 			"name": "[concat(parameters('factoryName'), '/Language_silver')]",
 			"type": "Microsoft.DataFactory/factories/datasets",
 			"apiVersion": "2018-06-01",
@@ -102,6 +128,7 @@
 				"typeProperties": {
 					"location": {
 						"type": "AzureBlobFSLocation",
+						"fileName": "part-00000-f778fd1c-36d4-46dc-824a-7f3eb5f02bc6-c000.snappy.parquet",
 						"folderPath": "result/bronze",
 						"fileSystem": "etloutput"
 					},
@@ -555,6 +582,13 @@
 								"referenceName": "MovieBlobStorage",
 								"type": "LinkedServiceReference"
 							}
+						},
+						{
+							"dataset": {
+								"referenceName": "Json1",
+								"type": "DatasetReference"
+							},
+							"name": "sink1"
 						}
 					],
 					"transformations": [
@@ -591,14 +625,19 @@
 						"     skipDuplicateMapInputs: true,",
 						"     skipDuplicateMapOutputs: true,",
 						"     saveOrder: 0,",
-						"     partitionBy('hash', 1)) ~> SaveToBronze"
+						"     partitionBy('hash', 1)) ~> SaveToBronze",
+						"MetaData sink(allowSchemaDrift: true,",
+						"     validateSchema: false,",
+						"     skipDuplicateMapInputs: true,",
+						"     skipDuplicateMapOutputs: true) ~> sink1"
 					]
 				}
 			},
 			"dependsOn": [
 				"[concat(variables('factoryId'), '/datasets/Movie_json')]",
 				"[concat(variables('factoryId'), '/datasets/Movie_Bronze')]",
-				"[concat(variables('factoryId'), '/linkedServices/MovieBlobStorage')]"
+				"[concat(variables('factoryId'), '/linkedServices/MovieBlobStorage')]",
+				"[concat(variables('factoryId'), '/datasets/Json1')]"
 			]
 		},
 		{
@@ -696,7 +735,8 @@
 								"parameters": {},
 								"datasetParameters": {
 									"InjestRawMovie": {},
-									"SaveToBronze": {}
+									"SaveToBronze": {},
+									"sink1": {}
 								}
 							},
 							"staging": {},
