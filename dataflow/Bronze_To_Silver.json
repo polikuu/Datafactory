@@ -181,7 +181,7 @@
 				"     each(match(name!=\"Id\"), $$ = first($$))) ~> DistinctRowLanguage",
 				"DistinctRowMovie derive(status = \"loaded\") ~> litStatusLoaded",
 				"split@silverMovieClean aggregate(groupBy(Id),",
-				"     each(match(name!=\"Id\"), $$ = first($$))) ~> DistinctRowMovie",
+				"     each(match(name!=\"Id\"), $$ = min($$))) ~> DistinctRowMovie",
 				"DistinctRowMovieQ derive(status = \"quarantined\") ~> litStatusQuarantined",
 				"split@silverMovieQuarantined aggregate(groupBy(Id),",
 				"     each(match(name!=\"Id\"), $$ = first($$))) ~> DistinctRowMovieQ",

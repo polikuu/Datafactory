@@ -27,7 +27,7 @@
 				}
 			},
 			{
-				"name": "BronzeToSilver",
+				"name": "Bronze_To_Silver",
 				"type": "ExecuteDataFlow",
 				"dependsOn": [
 					{
@@ -38,7 +38,7 @@
 					}
 				],
 				"policy": {
-					"timeout": "1.00:00:00",
+					"timeout": "0.12:00:00",
 					"retry": 0,
 					"retryIntervalInSeconds": 30,
 					"secureOutput": false,
