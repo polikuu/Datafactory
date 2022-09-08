@@ -1,5 +1,5 @@
 {
-	"name": "BronzeToSilver",
+	"name": "Bronze_To_Silver",
 	"properties": {
 		"type": "MappingDataFlow",
 		"typeProperties": {
@@ -9,7 +9,7 @@
 						"referenceName": "Movie_Bronze",
 						"type": "DatasetReference"
 					},
-					"name": "IngestBronze"
+					"name": "ingestBronze"
 				}
 			],
 			"sinks": [
@@ -119,7 +119,7 @@
 				"     validateSchema: false,",
 				"     inferDriftedColumnTypes: true,",
 				"     ignoreNoFilesFound: false,",
-				"     format: 'parquet') ~> IngestBronze",
+				"     format: 'parquet') ~> ingestBronze",
 				"filterNew select(mapColumn(",
 				"          value",
 				"     ),",
@@ -138,7 +138,7 @@
 				"     skipDuplicateMapOutputs: true) ~> flatten",
 				"flatten aggregate(groupBy(id),",
 				"     each(match(name!=\"id\"), $$ = first($$))) ~> DistinctRowGenres",
-				"IngestBronze filter(status == \"new\") ~> filterNew",
+				"ingestBronze filter(status == \"new\") ~> filterNew",
 				"bronzeAgumentedDFMovie split(RunTime >= 0,",
 				"     disjoint: false) ~> split@(silverMovieClean, silverMovieQuarantined)",
 				"DistinctRowMovie select(mapColumn(",
@@ -191,7 +191,7 @@
 				"     ),",
 				"     skipDuplicateMapInputs: true,",
 				"     skipDuplicateMapOutputs: true) ~> selectValueStatus",
-				"selectValueStatus, IngestBronze join(selectValueStatus@value.Id == IngestBronze@value.Id,",
+				"selectValueStatus, ingestBronze join(selectValueStatus@value.Id == ingestBronze@value.Id,",
 				"     joinType:'inner',",
 				"     matchType:'exact',",
 				"     ignoreSpaces: false,",
