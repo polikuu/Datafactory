@@ -1,5 +1,5 @@
 {
-	"name": "QuarantinedBronzeT",
+	"name": "SilverUpdate",
 	"properties": {
 		"type": "MappingDataFlow",
 		"typeProperties": {
@@ -58,6 +58,9 @@
 				},
 				{
 					"name": "ChangeValueToString"
+				},
+				{
+					"name": "addLanguageID"
 				}
 			],
 			"scriptLines": [
@@ -99,7 +102,7 @@
 				"     skipDuplicateMapInputs: true,",
 				"     skipDuplicateMapOutputs: true) ~> selectValue",
 				"selectValue derive(RunTime = abs(RunTime)) ~> absRunTime",
-				"DistinctRows select(mapColumn(",
+				"addLanguageID select(mapColumn(",
 				"          Id,",
 				"          Budget,",
 				"          Revenue,",
@@ -117,8 +120,8 @@
 				"          UpdatedDate,",
 				"          UpdatedBy,",
 				"          CreatedBy,",
-				"          genres,",
-				"          OriginalLanguage",
+				"          Genres_Id = genres[1].id,",
+				"          Language_Id",
 				"     ),",
 				"     skipDuplicateMapInputs: true,",
 				"     skipDuplicateMapOutputs: true) ~> excludeValue",
@@ -146,6 +149,7 @@
 				"     skipDuplicateMapInputs: true,",
 				"     skipDuplicateMapOutputs: true) ~> selectBronzeColumn",
 				"selectBronzeColumn derive(value = toString(value)) ~> ChangeValueToString",
+				"DistinctRows derive(Language_Id = 1) ~> addLanguageID",
 				"excludeValue sink(allowSchemaDrift: true,",
 				"     validateSchema: false,",
 				"     format: 'parquet',",
