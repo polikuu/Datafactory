@@ -1,0 +1,23 @@
+{
+	"name": "movie_genre_junction_silver",
+	"properties": {
+		"linkedServiceName": {
+			"referenceName": "MovieBlobStorage",
+			"type": "LinkedServiceReference"
+		},
+		"folder": {
+			"name": "Movie"
+		},
+		"annotations": [],
+		"type": "Parquet",
+		"typeProperties": {
+			"location": {
+				"type": "AzureBlobStorageLocation",
+				"folderPath": "result/silver/junction",
+				"container": "etloutput"
+			},
+			"compressionCodec": "snappy"
+		},
+		"schema": []
+	}
+}

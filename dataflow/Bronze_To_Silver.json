@@ -41,6 +41,13 @@
 					},
 					"name": "saveBronzeMoive",
 					"description": "save Bronze table for clean movie dataset (loaded)"
+				},
+				{
+					"dataset": {
+						"referenceName": "movie_genre_junction_silver",
+						"type": "DatasetReference"
+					},
+					"name": "saveSilverJunction"
 				}
 			],
 			"transformations": [
@@ -105,6 +112,9 @@
 				},
 				{
 					"name": "select1"
+				},
+				{
+					"name": "movieGenreID"
 				}
 			],
 			"scriptLines": [
@@ -229,6 +239,12 @@
 				"     ),",
 				"     skipDuplicateMapInputs: true,",
 				"     skipDuplicateMapOutputs: true) ~> select1",
+				"DistinctRowMovie select(mapColumn(",
+				"          Movie_Id = value.Id,",
+				"          Genres_Id = genres[1].id",
+				"     ),",
+				"     skipDuplicateMapInputs: true,",
+				"     skipDuplicateMapOutputs: true) ~> movieGenreID",
 				"DistinctRowGenres sink(allowSchemaDrift: true,",
 				"     validateSchema: false,",
 				"     format: 'parquet',",
@@ -268,7 +284,14 @@
 				"     saveOrder: 3,",
 				"     partitionBy('hash', 1),",
 				"     preCommands: [],",
-				"     postCommands: []) ~> saveBronzeMoive"
+				"     postCommands: []) ~> saveBronzeMoive",
+				"movieGenreID sink(allowSchemaDrift: true,",
+				"     validateSchema: false,",
+				"     format: 'parquet',",
+				"     truncate: true,",
+				"     skipDuplicateMapInputs: true,",
+				"     skipDuplicateMapOutputs: true,",
+				"     partitionBy('hash', 1)) ~> saveSilverJunction"
 			]
 		}
 	}
