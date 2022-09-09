@@ -60,7 +60,7 @@
 					"description": "Creating/updating the columns 'value, Id, Budget, Revenue, RunTime, Price, Title, Overview, Tagline, Imdburl, TmdbUrl, PosterUrl, BackdropUrl, ReleaseDate, p_CreatedDate, UpdatedDate, UpdatedBy, CreatedBy, Genres, Language_Id'.\n\nUpdating the minimum of Budget to 100,000"
 				},
 				{
-					"name": "parse"
+					"name": "parseGenres"
 				},
 				{
 					"name": "DistinctRowGenres"
@@ -141,12 +141,13 @@
 				"          CreatedDate = toDate(CreatedDate),",
 				"          Language_Id = 1) ~> bronzeAgumentedDFMovie",
 				"selectGenres select(mapColumn(",
-				"          id = genres[1].id,",
-				"          name = genres[1].name",
+				"          { Generes_Id} = genres[1].id,",
+				"          Generes_Name = genres[1].name",
 				"     ),",
+				"     partitionBy('hash', 1),",
 				"     skipDuplicateMapInputs: true,",
-				"     skipDuplicateMapOutputs: true) ~> parse",
-				"parse aggregate(groupBy(id),",
+				"     skipDuplicateMapOutputs: true) ~> parseGenres",
+				"parseGenres aggregate(groupBy(id),",
 				"     each(match(name!=\"id\"), $$ = first($$))) ~> DistinctRowGenres",
 				"ingestBronze filter(status == \"new\") ~> filterNew",
 				"bronzeAgumentedDFMovie split(RunTime >= 0,",
