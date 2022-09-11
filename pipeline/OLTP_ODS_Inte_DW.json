@@ -23,8 +23,15 @@
 					"dataset": {
 						"referenceName": "OLTP",
 						"type": "DatasetReference"
-					}
+					},
+					"firstRowOnly": false
 				}
+			},
+			{
+				"name": "ForEach1",
+				"type": "ForEach",
+				"dependsOn": [],
+				"userProperties": []
 			}
 		],
 		"annotations": []
