@@ -5,12 +5,16 @@
 			"referenceName": "AzureSqlDatabase3",
 			"type": "LinkedServiceReference"
 		},
+		"parameters": {
+			"schemaName": {
+				"type": "string"
+			},
+			"tableName": {
+				"type": "string"
+			}
+		},
 		"annotations": [],
 		"type": "AzureSqlTable",
-		"schema": [],
-		"typeProperties": {
-			"schema": "Sales",
-			"table": "Orders"
-		}
+		"schema": []
 	}
 }

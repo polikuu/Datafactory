@@ -1,0 +1,315 @@
+{
+	"name": "pipeline1",
+	"properties": {
+		"activities": [
+			{
+				"name": "Calculate ETL Cutoff Time",
+				"type": "SetVariable",
+				"dependsOn": [],
+				"userProperties": [],
+				"typeProperties": {
+					"variableName": "TargetETLCutoffTime",
+					"value": {
+						"value": "@utcnow()",
+						"type": "Expression"
+					}
+				}
+			},
+			{
+				"name": "LookupTableName",
+				"type": "Lookup",
+				"dependsOn": [],
+				"policy": {
+					"timeout": "7.00:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"source": {
+						"type": "AzureSqlSource",
+						"queryTimeout": "02:00:00",
+						"partitionOption": "None"
+					},
+					"dataset": {
+						"referenceName": "OLTP",
+						"type": "DatasetReference"
+					},
+					"firstRowOnly": false
+				}
+			},
+			{
+				"name": "Ensure DateDim includes current year",
+				"type": "SqlServerStoredProcedure",
+				"dependsOn": [
+					{
+						"activity": "Calculate ETL Cutoff Time",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"policy": {
+					"timeout": "7.00:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"storedProcedureName": "[Integration].[PopulateDateDimensionForYear]",
+					"storedProcedureParameters": {
+						"YearNumber": {
+							"value": "2022",
+							"type": "Int32"
+						}
+					}
+				}
+			},
+			{
+				"name": "ForEachTable",
+				"type": "ForEach",
+				"dependsOn": [
+					{
+						"activity": "LookupTableName",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"userProperties": [],
+				"typeProperties": {
+					"items": {
+						"value": "@activity('LookupTableName').output.value",
+						"type": "Expression"
+					},
+					"isSequential": true,
+					"activities": [
+						{
+							"name": "Truncate Table_Staging",
+							"type": "Script",
+							"dependsOn": [
+								{
+									"activity": "LookupLineageKey",
+									"dependencyConditions": [
+										"Succeeded"
+									]
+								}
+							],
+							"policy": {
+								"timeout": "7.00:00:00",
+								"retry": 0,
+								"retryIntervalInSeconds": 30,
+								"secureOutput": false,
+								"secureInput": false
+							},
+							"userProperties": [],
+							"typeProperties": {
+								"scripts": [
+									{
+										"type": "Query",
+										"text": {
+											"value": "DELETE FROM Integration.@{item().Name}_Staging",
+											"type": "Expression"
+										}
+									}
+								]
+							}
+						},
+						{
+							"name": "LookupLineageKey",
+							"type": "Lookup",
+							"dependsOn": [],
+							"policy": {
+								"timeout": "7.00:00:00",
+								"retry": 0,
+								"retryIntervalInSeconds": 30,
+								"secureOutput": false,
+								"secureInput": false
+							},
+							"userProperties": [],
+							"typeProperties": {
+								"source": {
+									"type": "AzureSqlSource",
+									"sqlReaderStoredProcedureName": "[Integration].[GetLineageKey]",
+									"storedProcedureParameters": {
+										"NewCutoffTime": {
+											"type": "DateTime",
+											"value": {
+												"value": "@variables('TargetETLCutoffTime')",
+												"type": "Expression"
+											}
+										},
+										"TableName": {
+											"type": "String",
+											"value": {
+												"value": "@{item().Col}",
+												"type": "Expression"
+											}
+										}
+									},
+									"queryTimeout": "02:00:00",
+									"partitionOption": "None"
+								}
+							}
+						},
+						{
+							"name": "LookupETLCutoffTime",
+							"type": "Lookup",
+							"dependsOn": [
+								{
+									"activity": "Truncate Table_Staging",
+									"dependencyConditions": [
+										"Succeeded"
+									]
+								}
+							],
+							"policy": {
+								"timeout": "7.00:00:00",
+								"retry": 0,
+								"retryIntervalInSeconds": 30,
+								"secureOutput": false,
+								"secureInput": false
+							},
+							"userProperties": [],
+							"typeProperties": {
+								"source": {
+									"type": "AzureSqlSource",
+									"sqlReaderStoredProcedureName": "[Integration].[GetLastETLCutoffTime]",
+									"storedProcedureParameters": {
+										"TableName": {
+											"type": "String",
+											"value": {
+												"value": "@{item().Col}",
+												"type": "Expression"
+											}
+										}
+									},
+									"queryTimeout": "02:00:00",
+									"partitionOption": "None"
+								}
+							}
+						},
+						{
+							"name": "Set LastCutoffTime",
+							"type": "SetVariable",
+							"dependsOn": [
+								{
+									"activity": "LookupETLCutoffTime",
+									"dependencyConditions": [
+										"Succeeded"
+									]
+								}
+							],
+							"userProperties": [],
+							"typeProperties": {
+								"variableName": "LastETLCutoffTime",
+								"value": {
+									"value": "@{activity('LookupETLCutoffTime').output.firstRow.CutoffTime}",
+									"type": "Expression"
+								}
+							}
+						},
+						{
+							"name": "ExtractUpdatedDataToIntegration",
+							"type": "Copy",
+							"dependsOn": [
+								{
+									"activity": "Set LastCutoffTime",
+									"dependencyConditions": [
+										"Succeeded"
+									]
+								}
+							],
+							"policy": {
+								"timeout": "7.00:00:00",
+								"retry": 0,
+								"retryIntervalInSeconds": 30,
+								"secureOutput": false,
+								"secureInput": false
+							},
+							"userProperties": [],
+							"typeProperties": {
+								"source": {
+									"type": "AzureSqlSource",
+									"sqlReaderStoredProcedureName": {
+										"value": "[Integration].[Get@{item().Name}Updates]",
+										"type": "Expression"
+									},
+									"storedProcedureParameters": {
+										"LastCutoff": {
+											"type": "DateTime",
+											"value": {
+												"value": "@variables('LastETLCutoffTime')",
+												"type": "Expression"
+											}
+										},
+										"NewCutoff": {
+											"type": "DateTime",
+											"value": {
+												"value": "@variables('TargetETLCutoffTime')",
+												"type": "Expression"
+											}
+										}
+									},
+									"queryTimeout": "02:00:00",
+									"partitionOption": "None"
+								},
+								"sink": {
+									"type": "AzureSqlSink",
+									"writeBehavior": "insert",
+									"sqlWriterUseTableLock": false
+								},
+								"enableStaging": false
+							}
+						},
+						{
+							"name": "MigrateStagedTableData",
+							"type": "SqlServerStoredProcedure",
+							"dependsOn": [
+								{
+									"activity": "ExtractUpdatedDataToIntegration",
+									"dependencyConditions": [
+										"Succeeded"
+									]
+								}
+							],
+							"policy": {
+								"timeout": "7.00:00:00",
+								"retry": 0,
+								"retryIntervalInSeconds": 30,
+								"secureOutput": false,
+								"secureInput": false
+							},
+							"userProperties": [],
+							"typeProperties": {
+								"storedProcedureName": {
+									"value": "[Integration].[MigrateStaged@{item().Name}Data]",
+									"type": "Expression"
+								}
+							}
+						}
+					]
+				}
+			}
+		],
+		"variables": {
+			"TargetETLCutoffTime": {
+				"type": "String"
+			},
+			"LineageKey": {
+				"type": "String"
+			},
+			"TableName": {
+				"type": "String"
+			},
+			"LastETLCutoffTime": {
+				"type": "String"
+			}
+		},
+		"annotations": []
+	}
+}
