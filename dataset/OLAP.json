@@ -1,15 +1,15 @@
 {
-	"name": "OLTP",
+	"name": "OLAP",
 	"properties": {
 		"linkedServiceName": {
 			"referenceName": "AzureSqlDatabase3",
 			"type": "LinkedServiceReference"
 		},
 		"parameters": {
-			"schemaName": {
+			"SchemaName": {
 				"type": "string"
 			},
-			"tableName": {
+			"Tablename": {
 				"type": "string"
 			}
 		},
@@ -18,11 +18,11 @@
 		"schema": [],
 		"typeProperties": {
 			"schema": {
-				"value": "@dataset().schemaName",
+				"value": "@dataset().SchemaName",
 				"type": "Expression"
 			},
 			"table": {
-				"value": "@dataset().tableName",
+				"value": "@dataset().Tablename",
 				"type": "Expression"
 			}
 		}
