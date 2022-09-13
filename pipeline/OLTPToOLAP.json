@@ -37,8 +37,8 @@
 						"referenceName": "OLTP",
 						"type": "DatasetReference",
 						"parameters": {
-							"schemaName": "dbo",
-							"tableName": "tableName"
+							"SchemaName": "sales",
+							"TableName": "invoices"
 						}
 					},
 					"firstRowOnly": false
