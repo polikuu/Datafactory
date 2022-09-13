@@ -107,6 +107,10 @@
 								"secureInput": false
 							},
 							"userProperties": [],
+							"linkedServiceName": {
+								"referenceName": "AzureSqlDatabase3",
+								"type": "LinkedServiceReference"
+							},
 							"typeProperties": {
 								"scripts": [
 									{
@@ -153,6 +157,10 @@
 									},
 									"queryTimeout": "02:00:00",
 									"partitionOption": "None"
+								},
+								"dataset": {
+									"referenceName": "OLTP",
+									"type": "DatasetReference"
 								}
 							}
 						},
@@ -257,11 +265,6 @@
 									},
 									"queryTimeout": "02:00:00",
 									"partitionOption": "None"
-								},
-								"sink": {
-									"type": "AzureSqlSink",
-									"writeBehavior": "insert",
-									"sqlWriterUseTableLock": false
 								},
 								"enableStaging": false
 							}
