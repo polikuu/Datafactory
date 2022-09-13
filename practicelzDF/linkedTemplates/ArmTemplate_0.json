@@ -471,10 +471,10 @@
 					"type": "LinkedServiceReference"
 				},
 				"parameters": {
-					"schemaName": {
+					"SchemaName": {
 						"type": "string"
 					},
-					"tableName": {
+					"TableName": {
 						"type": "string"
 					}
 				},
@@ -583,8 +583,8 @@
 								"referenceName": "OLTP",
 								"type": "DatasetReference",
 								"parameters": {
-									"schemaName": "dbo",
-									"tableName": "TableName"
+									"SchemaName": "dbo",
+									"TableName": "TableName"
 								}
 							},
 							"firstRowOnly": false
