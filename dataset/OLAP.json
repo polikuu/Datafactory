@@ -22,7 +22,7 @@
 				"type": "Expression"
 			},
 			"table": {
-				"value": "@dataset().TableName",
+				"value": "@dataset().Tablename",
 				"type": "Expression"
 			}
 		}

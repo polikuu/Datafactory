@@ -37,8 +37,8 @@
 						"referenceName": "OLTP",
 						"type": "DatasetReference",
 						"parameters": {
-							"schemaName": "sys",
-							"tableName": "tables"
+							"schemaName": "dbo",
+							"tableName": "tableName"
 						}
 					},
 					"firstRowOnly": false
