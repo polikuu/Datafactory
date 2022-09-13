@@ -6,7 +6,7 @@
 		"type": "AzureSqlDatabase",
 		"typeProperties": {
 			"connectionString": "integrated security=False;encrypt=True;connection timeout=30;data source=wwi-datafactory.database.windows.net;initial catalog=OLTP;user id=poliku",
-			"encryptedCredential": "ew0KICAiVmVyc2lvbiI6ICIyMDE3LTExLTMwIiwNCiAgIlByb3RlY3Rpb25Nb2RlIjogIktleSIsDQogICJTZWNyZXRDb250ZW50VHlwZSI6ICJQbGFpbnRleHQiLA0KICAiQ3JlZGVudGlhbElkIjogIkRBVEFGQUNUT1JZQDVBNkIzNDNFLTYxOEYtNEMyQy1CNTY2LTVDQUY1RTYyNUFGRV81OGUyMWVkYS1hOWFkLTRkZWItOGE0My0xODMwOGU3YzVlYTgiDQp9"
+			"encryptedCredential": "ew0KICAiVmVyc2lvbiI6ICIyMDE3LTExLTMwIiwNCiAgIlByb3RlY3Rpb25Nb2RlIjogIktleSIsDQogICJTZWNyZXRDb250ZW50VHlwZSI6ICJQbGFpbnRleHQiLA0KICAiQ3JlZGVudGlhbElkIjogIkRBVEFGQUNUT1JZQDVBNkIzNDNFLTYxOEYtNEMyQy1CNTY2LTVDQUY1RTYyNUFGRV82MzU5ODA1My00OTE3LTRlNGQtYmE3Zi04ZGE4OTgxODQ2OWUiDQp9"
 		}
 	}
 }
