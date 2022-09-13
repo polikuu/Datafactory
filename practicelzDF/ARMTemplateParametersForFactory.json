@@ -5,6 +5,15 @@
 		"factoryName": {
 			"value": "practicelzDF"
 		},
+		"AzureSqlDatabase1_connectionString": {
+			"value": ""
+		},
+		"AzureSqlDatabase2_connectionString": {
+			"value": ""
+		},
+		"AzureSqlDatabase3_connectionString": {
+			"value": ""
+		},
 		"MovieBlobStorage_connectionString": {
 			"value": ""
 		}

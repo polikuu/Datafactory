@@ -7,6 +7,18 @@
 			"metadata": "Data Factory name",
 			"defaultValue": "practicelzDF"
 		},
+		"AzureSqlDatabase1_connectionString": {
+			"type": "secureString",
+			"metadata": "Secure string for 'connectionString' of 'AzureSqlDatabase1'"
+		},
+		"AzureSqlDatabase2_connectionString": {
+			"type": "secureString",
+			"metadata": "Secure string for 'connectionString' of 'AzureSqlDatabase2'"
+		},
+		"AzureSqlDatabase3_connectionString": {
+			"type": "secureString",
+			"metadata": "Secure string for 'connectionString' of 'AzureSqlDatabase3'"
+		},
 		"MovieBlobStorage_connectionString": {
 			"type": "secureString",
 			"metadata": "Secure string for 'connectionString' of 'MovieBlobStorage'"
@@ -16,6 +28,388 @@
 		"factoryId": "[concat('Microsoft.DataFactory/factories/', parameters('factoryName'))]"
 	},
 	"resources": [
+		{
+			"name": "[concat(parameters('factoryName'), '/OLTPToOLAP')]",
+			"type": "Microsoft.DataFactory/factories/pipelines",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"activities": [
+					{
+						"name": "Calculate ETL Cutoff Time",
+						"type": "SetVariable",
+						"dependsOn": [],
+						"userProperties": [],
+						"typeProperties": {
+							"variableName": "TargetETLCutoffTime",
+							"value": {
+								"value": "@utcnow()",
+								"type": "Expression"
+							}
+						}
+					},
+					{
+						"name": "LookupTableName",
+						"type": "Lookup",
+						"dependsOn": [],
+						"policy": {
+							"timeout": "7.00:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"source": {
+								"type": "AzureSqlSource",
+								"queryTimeout": "02:00:00",
+								"partitionOption": "None"
+							},
+							"dataset": {
+								"referenceName": "OLTP",
+								"type": "DatasetReference",
+								"parameters": {
+									"schemaName": "dbo",
+									"tableName": "tableName"
+								}
+							},
+							"firstRowOnly": false
+						}
+					},
+					{
+						"name": "Ensure DateDim includes current year",
+						"type": "SqlServerStoredProcedure",
+						"dependsOn": [
+							{
+								"activity": "Calculate ETL Cutoff Time",
+								"dependencyConditions": [
+									"Succeeded"
+								]
+							}
+						],
+						"policy": {
+							"timeout": "7.00:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"storedProcedureName": {
+								"value": "[[Integration].[PopulateDateDimensionForYear]",
+								"type": "Expression"
+							},
+							"storedProcedureParameters": {
+								"YearNumber": {
+									"value": "2022",
+									"type": "Int32"
+								}
+							}
+						},
+						"linkedServiceName": {
+							"referenceName": "AzureSqlDatabase3",
+							"type": "LinkedServiceReference"
+						}
+					},
+					{
+						"name": "ForEachTable",
+						"type": "ForEach",
+						"dependsOn": [
+							{
+								"activity": "LookupTableName",
+								"dependencyConditions": [
+									"Succeeded"
+								]
+							}
+						],
+						"userProperties": [],
+						"typeProperties": {
+							"items": {
+								"value": "@activity('LookupTableName').output.value",
+								"type": "Expression"
+							},
+							"isSequential": true,
+							"activities": [
+								{
+									"name": "Truncate Table_Staging",
+									"type": "Script",
+									"dependsOn": [
+										{
+											"activity": "LookupLineageKey",
+											"dependencyConditions": [
+												"Succeeded"
+											]
+										}
+									],
+									"policy": {
+										"timeout": "7.00:00:00",
+										"retry": 0,
+										"retryIntervalInSeconds": 30,
+										"secureOutput": false,
+										"secureInput": false
+									},
+									"userProperties": [],
+									"linkedServiceName": {
+										"referenceName": "AzureSqlDatabase3",
+										"type": "LinkedServiceReference"
+									},
+									"typeProperties": {
+										"scripts": [
+											{
+												"type": "Query",
+												"text": {
+													"value": "DELETE FROM Integration.@{item().Name}_Staging",
+													"type": "Expression"
+												}
+											}
+										]
+									}
+								},
+								{
+									"name": "LookupLineageKey",
+									"type": "Lookup",
+									"dependsOn": [],
+									"policy": {
+										"timeout": "7.00:00:00",
+										"retry": 0,
+										"retryIntervalInSeconds": 30,
+										"secureOutput": false,
+										"secureInput": false
+									},
+									"userProperties": [],
+									"typeProperties": {
+										"source": {
+											"type": "AzureSqlSource",
+											"sqlReaderStoredProcedureName": "[[Integration].[GetLineageKey]",
+											"storedProcedureParameters": {
+												"NewCutoffTime": {
+													"type": "DateTime",
+													"value": {
+														"value": "@variables('TargetETLCutoffTime')",
+														"type": "Expression"
+													}
+												},
+												"TableName": {
+													"type": "String",
+													"value": {
+														"value": "@{item().Col}",
+														"type": "Expression"
+													}
+												}
+											},
+											"queryTimeout": "02:00:00",
+											"partitionOption": "None"
+										},
+										"dataset": {
+											"referenceName": "DWforSPs",
+											"type": "DatasetReference",
+											"parameters": {}
+										}
+									}
+								},
+								{
+									"name": "LookupETLCutoffTime",
+									"type": "Lookup",
+									"dependsOn": [
+										{
+											"activity": "Truncate Table_Staging",
+											"dependencyConditions": [
+												"Succeeded"
+											]
+										}
+									],
+									"policy": {
+										"timeout": "7.00:00:00",
+										"retry": 0,
+										"retryIntervalInSeconds": 30,
+										"secureOutput": false,
+										"secureInput": false
+									},
+									"userProperties": [],
+									"typeProperties": {
+										"source": {
+											"type": "AzureSqlSource",
+											"sqlReaderStoredProcedureName": "[[Integration].[GetLastETLCutoffTime]",
+											"storedProcedureParameters": {
+												"TableName": {
+													"type": "String",
+													"value": {
+														"value": "@{item().Col}",
+														"type": "Expression"
+													}
+												}
+											},
+											"queryTimeout": "02:00:00",
+											"partitionOption": "None"
+										},
+										"dataset": {
+											"referenceName": "DWforSPs",
+											"type": "DatasetReference",
+											"parameters": {}
+										}
+									}
+								},
+								{
+									"name": "Set LastCutoffTime",
+									"type": "SetVariable",
+									"dependsOn": [
+										{
+											"activity": "LookupETLCutoffTime",
+											"dependencyConditions": [
+												"Succeeded"
+											]
+										}
+									],
+									"userProperties": [],
+									"typeProperties": {
+										"variableName": "LastETLCutoffTime",
+										"value": {
+											"value": "@{activity('LookupETLCutoffTime').output.firstRow.CutoffTime}",
+											"type": "Expression"
+										}
+									}
+								},
+								{
+									"name": "ExtractUpdatedDataToIntegration",
+									"type": "Copy",
+									"dependsOn": [
+										{
+											"activity": "Set LastCutoffTime",
+											"dependencyConditions": [
+												"Succeeded"
+											]
+										}
+									],
+									"policy": {
+										"timeout": "7.00:00:00",
+										"retry": 0,
+										"retryIntervalInSeconds": 30,
+										"secureOutput": false,
+										"secureInput": false
+									},
+									"userProperties": [],
+									"typeProperties": {
+										"source": {
+											"type": "AzureSqlSource",
+											"sqlReaderStoredProcedureName": {
+												"value": "[[Integration].[Get@{item().Name}Updates]",
+												"type": "Expression"
+											},
+											"storedProcedureParameters": {
+												"LastCutoff": {
+													"type": "DateTime",
+													"value": {
+														"value": "@variables('LastETLCutoffTime')",
+														"type": "Expression"
+													}
+												},
+												"NewCutoff": {
+													"type": "DateTime",
+													"value": {
+														"value": "@variables('TargetETLCutoffTime')",
+														"type": "Expression"
+													}
+												}
+											},
+											"queryTimeout": "02:00:00",
+											"partitionOption": "None"
+										},
+										"sink": {
+											"type": "AzureSqlSink",
+											"writeBehavior": "insert",
+											"sqlWriterUseTableLock": false
+										},
+										"enableStaging": false,
+										"translator": {
+											"type": "TabularTranslator",
+											"typeConversion": true,
+											"typeConversionSettings": {
+												"allowDataTruncation": true,
+												"treatBooleanAsNumber": false
+											}
+										}
+									},
+									"inputs": [
+										{
+											"referenceName": "OLTPforSps",
+											"type": "DatasetReference",
+											"parameters": {}
+										}
+									],
+									"outputs": [
+										{
+											"referenceName": "OLAP",
+											"type": "DatasetReference",
+											"parameters": {
+												"SchemaName": "Integration",
+												"Tablename": "@{item().Name}_Staging"
+											}
+										}
+									]
+								},
+								{
+									"name": "MigrateStagedTableData",
+									"type": "SqlServerStoredProcedure",
+									"dependsOn": [
+										{
+											"activity": "ExtractUpdatedDataToIntegration",
+											"dependencyConditions": [
+												"Succeeded"
+											]
+										}
+									],
+									"policy": {
+										"timeout": "7.00:00:00",
+										"retry": 0,
+										"retryIntervalInSeconds": 30,
+										"secureOutput": false,
+										"secureInput": false
+									},
+									"userProperties": [],
+									"typeProperties": {
+										"storedProcedureName": {
+											"value": "[[Integration].[MigrateStaged@{item().Name}Data]",
+											"type": "Expression"
+										}
+									},
+									"linkedServiceName": {
+										"referenceName": "AzureSqlDatabase3",
+										"type": "LinkedServiceReference"
+									}
+								}
+							]
+						}
+					}
+				],
+				"policy": {
+					"elapsedTimeMetric": {},
+					"cancelAfter": {}
+				},
+				"variables": {
+					"TargetETLCutoffTime": {
+						"type": "String"
+					},
+					"LineageKey": {
+						"type": "String"
+					},
+					"TableName": {
+						"type": "String"
+					},
+					"LastETLCutoffTime": {
+						"type": "String"
+					}
+				},
+				"annotations": []
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/datasets/OLTP')]",
+				"[concat(variables('factoryId'), '/linkedServices/AzureSqlDatabase3')]",
+				"[concat(variables('factoryId'), '/datasets/DWforSPs')]",
+				"[concat(variables('factoryId'), '/datasets/OLTPforSps')]",
+				"[concat(variables('factoryId'), '/datasets/OLAP')]"
+			]
+		},
 		{
 			"name": "[concat(parameters('factoryName'), '/QuarantinedBronzeToSilver')]",
 			"type": "Microsoft.DataFactory/factories/pipelines",
@@ -205,6 +599,188 @@
 			"dependsOn": [
 				"[concat(variables('factoryId'), '/pipelines/RawToBronzeToSilver')]",
 				"[concat(variables('factoryId'), '/pipelines/QuarantinedBronzeToSilver')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/DWforSPs')]",
+			"type": "Microsoft.DataFactory/factories/datasets",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "AzureSqlDatabase3",
+					"type": "LinkedServiceReference"
+				},
+				"annotations": [],
+				"type": "AzureSqlTable",
+				"schema": [],
+				"typeProperties": {}
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/linkedServices/AzureSqlDatabase3')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/DimEmp')]",
+			"type": "Microsoft.DataFactory/factories/datasets",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "AzureSqlDatabase2",
+					"type": "LinkedServiceReference"
+				},
+				"annotations": [],
+				"type": "AzureSqlTable",
+				"schema": [
+					{
+						"name": "EmpID",
+						"type": "int",
+						"precision": 10
+					},
+					{
+						"name": "surrogatekey",
+						"type": "nvarchar"
+					},
+					{
+						"name": "Region",
+						"type": "nvarchar"
+					},
+					{
+						"name": "Status",
+						"type": "nvarchar"
+					},
+					{
+						"name": "EmpFunction",
+						"type": "nvarchar"
+					},
+					{
+						"name": "Level",
+						"type": "nvarchar"
+					},
+					{
+						"name": "Role",
+						"type": "nvarchar"
+					},
+					{
+						"name": "StartDate",
+						"type": "date"
+					},
+					{
+						"name": "EndDate",
+						"type": "date"
+					},
+					{
+						"name": "iscurrent",
+						"type": "int",
+						"precision": 10
+					},
+					{
+						"name": "processtime",
+						"type": "datetime",
+						"precision": 23,
+						"scale": 3
+					}
+				],
+				"typeProperties": {
+					"tableName": "[[dbo].[DimEmp]"
+				}
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/linkedServices/AzureSqlDatabase2')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/Dynamic_SQL')]",
+			"type": "Microsoft.DataFactory/factories/datasets",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "AzureSqlDatabase3",
+					"type": "LinkedServiceReference"
+				},
+				"parameters": {
+					"SchemaName": {
+						"type": "string"
+					},
+					"TableName": {
+						"type": "string"
+					}
+				},
+				"annotations": [],
+				"type": "AzureSqlTable",
+				"schema": [],
+				"typeProperties": {
+					"schema": {
+						"value": "@dataset().SchemaName",
+						"type": "Expression"
+					},
+					"table": {
+						"value": "@dataset().TableName",
+						"type": "Expression"
+					}
+				}
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/linkedServices/AzureSqlDatabase3')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/EmployeeFiles')]",
+			"type": "Microsoft.DataFactory/factories/datasets",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "MovieBlobStorage",
+					"type": "LinkedServiceReference"
+				},
+				"annotations": [],
+				"type": "DelimitedText",
+				"typeProperties": {
+					"location": {
+						"type": "AzureBlobStorageLocation",
+						"container": "mycontainer"
+					},
+					"columnDelimiter": ",",
+					"escapeChar": "\\",
+					"firstRowAsHeader": true,
+					"quoteChar": "\""
+				},
+				"schema": [
+					{
+						"name": "EmpID",
+						"type": "String"
+					},
+					{
+						"name": "Region",
+						"type": "String"
+					},
+					{
+						"name": "Status",
+						"type": "String"
+					},
+					{
+						"name": "Function",
+						"type": "String"
+					},
+					{
+						"name": "Level",
+						"type": "String"
+					},
+					{
+						"name": "Role",
+						"type": "String"
+					},
+					{
+						"name": "StartDate",
+						"type": "String"
+					},
+					{
+						"name": "EndDate",
+						"type": "String"
+					}
+				]
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/linkedServices/MovieBlobStorage')]"
 			]
 		},
 		{
@@ -424,6 +1000,94 @@
 			]
 		},
 		{
+			"name": "[concat(parameters('factoryName'), '/OLAP')]",
+			"type": "Microsoft.DataFactory/factories/datasets",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "AzureSqlDatabase3",
+					"type": "LinkedServiceReference"
+				},
+				"parameters": {
+					"SchemaName": {
+						"type": "string"
+					},
+					"Tablename": {
+						"type": "string"
+					}
+				},
+				"annotations": [],
+				"type": "AzureSqlTable",
+				"schema": [],
+				"typeProperties": {
+					"schema": {
+						"value": "@dataset().SchemaName",
+						"type": "Expression"
+					},
+					"table": {
+						"value": "@dataset().Tablename",
+						"type": "Expression"
+					}
+				}
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/linkedServices/AzureSqlDatabase3')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/OLTP')]",
+			"type": "Microsoft.DataFactory/factories/datasets",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "AzureSqlDatabase3",
+					"type": "LinkedServiceReference"
+				},
+				"parameters": {
+					"schemaName": {
+						"type": "string"
+					},
+					"tableName": {
+						"type": "string"
+					}
+				},
+				"annotations": [],
+				"type": "AzureSqlTable",
+				"schema": [],
+				"typeProperties": {
+					"schema": {
+						"value": "@dataset().schemaName",
+						"type": "Expression"
+					},
+					"table": {
+						"value": "@dataset().tableName",
+						"type": "Expression"
+					}
+				}
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/linkedServices/AzureSqlDatabase3')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/OLTPforSps')]",
+			"type": "Microsoft.DataFactory/factories/datasets",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "AzureSqlDatabase3",
+					"type": "LinkedServiceReference"
+				},
+				"annotations": [],
+				"type": "AzureSqlTable",
+				"schema": [],
+				"typeProperties": {}
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/linkedServices/AzureSqlDatabase3')]"
+			]
+		},
+		{
 			"name": "[concat(parameters('factoryName'), '/movie_genre_junction_silver')]",
 			"type": "Microsoft.DataFactory/factories/datasets",
 			"apiVersion": "2018-06-01",
@@ -450,6 +1114,45 @@
 			"dependsOn": [
 				"[concat(variables('factoryId'), '/linkedServices/MovieBlobStorage')]"
 			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/AzureSqlDatabase1')]",
+			"type": "Microsoft.DataFactory/factories/linkedServices",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"annotations": [],
+				"type": "AzureSqlDatabase",
+				"typeProperties": {
+					"connectionString": "[parameters('AzureSqlDatabase1_connectionString')]"
+				}
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/AzureSqlDatabase2')]",
+			"type": "Microsoft.DataFactory/factories/linkedServices",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"annotations": [],
+				"type": "AzureSqlDatabase",
+				"typeProperties": {
+					"connectionString": "[parameters('AzureSqlDatabase2_connectionString')]"
+				}
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/AzureSqlDatabase3')]",
+			"type": "Microsoft.DataFactory/factories/linkedServices",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"annotations": [],
+				"type": "AzureSqlDatabase",
+				"typeProperties": {
+					"connectionString": "[parameters('AzureSqlDatabase3_connectionString')]"
+				}
+			},
+			"dependsOn": []
 		},
 		{
 			"name": "[concat(parameters('factoryName'), '/MovieBlobStorage')]",
