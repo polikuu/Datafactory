@@ -22,6 +22,10 @@
 		"MovieBlobStorage_connectionString": {
 			"type": "secureString",
 			"metadata": "Secure string for 'connectionString' of 'MovieBlobStorage'"
+		},
+		"OLAP_connectionString": {
+			"type": "secureString",
+			"metadata": "Secure string for 'connectionString' of 'OLAP'"
 		}
 	},
 	"variables": {
@@ -96,10 +100,7 @@
 						},
 						"userProperties": [],
 						"typeProperties": {
-							"storedProcedureName": {
-								"value": "[[Integration].[PopulateDateDimensionForYear]",
-								"type": "Expression"
-							},
+							"storedProcedureName": "[[Integration].[PopulateDateDimensionForYear]",
 							"storedProcedureParameters": {
 								"YearNumber": {
 									"value": "2022",
@@ -108,7 +109,7 @@
 							}
 						},
 						"linkedServiceName": {
-							"referenceName": "AzureSqlDatabase3",
+							"referenceName": "OLAP",
 							"type": "LinkedServiceReference"
 						}
 					},
@@ -151,7 +152,7 @@
 									},
 									"userProperties": [],
 									"linkedServiceName": {
-										"referenceName": "AzureSqlDatabase3",
+										"referenceName": "OLAP",
 										"type": "LinkedServiceReference"
 									},
 									"typeProperties": {
@@ -374,7 +375,7 @@
 										}
 									},
 									"linkedServiceName": {
-										"referenceName": "AzureSqlDatabase3",
+										"referenceName": "OLAP",
 										"type": "LinkedServiceReference"
 									}
 								}
@@ -404,7 +405,7 @@
 			},
 			"dependsOn": [
 				"[concat(variables('factoryId'), '/datasets/OLTP')]",
-				"[concat(variables('factoryId'), '/linkedServices/AzureSqlDatabase3')]",
+				"[concat(variables('factoryId'), '/linkedServices/OLAP')]",
 				"[concat(variables('factoryId'), '/datasets/DWforSPs')]",
 				"[concat(variables('factoryId'), '/datasets/OLTPforSps')]",
 				"[concat(variables('factoryId'), '/datasets/OLAP')]"
@@ -607,7 +608,7 @@
 			"apiVersion": "2018-06-01",
 			"properties": {
 				"linkedServiceName": {
-					"referenceName": "AzureSqlDatabase3",
+					"referenceName": "OLAP",
 					"type": "LinkedServiceReference"
 				},
 				"annotations": [],
@@ -616,76 +617,7 @@
 				"typeProperties": {}
 			},
 			"dependsOn": [
-				"[concat(variables('factoryId'), '/linkedServices/AzureSqlDatabase3')]"
-			]
-		},
-		{
-			"name": "[concat(parameters('factoryName'), '/DimEmp')]",
-			"type": "Microsoft.DataFactory/factories/datasets",
-			"apiVersion": "2018-06-01",
-			"properties": {
-				"linkedServiceName": {
-					"referenceName": "AzureSqlDatabase2",
-					"type": "LinkedServiceReference"
-				},
-				"annotations": [],
-				"type": "AzureSqlTable",
-				"schema": [
-					{
-						"name": "EmpID",
-						"type": "int",
-						"precision": 10
-					},
-					{
-						"name": "surrogatekey",
-						"type": "nvarchar"
-					},
-					{
-						"name": "Region",
-						"type": "nvarchar"
-					},
-					{
-						"name": "Status",
-						"type": "nvarchar"
-					},
-					{
-						"name": "EmpFunction",
-						"type": "nvarchar"
-					},
-					{
-						"name": "Level",
-						"type": "nvarchar"
-					},
-					{
-						"name": "Role",
-						"type": "nvarchar"
-					},
-					{
-						"name": "StartDate",
-						"type": "date"
-					},
-					{
-						"name": "EndDate",
-						"type": "date"
-					},
-					{
-						"name": "iscurrent",
-						"type": "int",
-						"precision": 10
-					},
-					{
-						"name": "processtime",
-						"type": "datetime",
-						"precision": 23,
-						"scale": 3
-					}
-				],
-				"typeProperties": {
-					"tableName": "[[dbo].[DimEmp]"
-				}
-			},
-			"dependsOn": [
-				"[concat(variables('factoryId'), '/linkedServices/AzureSqlDatabase2')]"
+				"[concat(variables('factoryId'), '/linkedServices/OLAP')]"
 			]
 		},
 		{
@@ -1005,7 +937,7 @@
 			"apiVersion": "2018-06-01",
 			"properties": {
 				"linkedServiceName": {
-					"referenceName": "AzureSqlDatabase3",
+					"referenceName": "OLAP",
 					"type": "LinkedServiceReference"
 				},
 				"parameters": {
@@ -1031,7 +963,7 @@
 				}
 			},
 			"dependsOn": [
-				"[concat(variables('factoryId'), '/linkedServices/AzureSqlDatabase3')]"
+				"[concat(variables('factoryId'), '/linkedServices/OLAP')]"
 			]
 		},
 		{
@@ -1163,6 +1095,19 @@
 				"type": "AzureBlobStorage",
 				"typeProperties": {
 					"connectionString": "[parameters('MovieBlobStorage_connectionString')]"
+				}
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/OLAP')]",
+			"type": "Microsoft.DataFactory/factories/linkedServices",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"annotations": [],
+				"type": "AzureSqlDatabase",
+				"typeProperties": {
+					"connectionString": "[parameters('OLAP_connectionString')]"
 				}
 			},
 			"dependsOn": []

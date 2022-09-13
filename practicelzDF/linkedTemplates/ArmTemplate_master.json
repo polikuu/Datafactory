@@ -23,6 +23,10 @@
 			"type": "secureString",
 			"metadata": "Secure string for 'connectionString' of 'MovieBlobStorage'"
 		},
+		"OLAP_connectionString": {
+			"type": "secureString",
+			"metadata": "Secure string for 'connectionString' of 'OLAP'"
+		},
 		"containerUri": {
 			"type": "string",
 			"metadata": "URI to storage account containing linked ARM templates"
@@ -61,6 +65,9 @@
 					},
 					"MovieBlobStorage_connectionString": {
 						"value": "[parameters('MovieBlobStorage_connectionString')]"
+					},
+					"OLAP_connectionString": {
+						"value": "[parameters('OLAP_connectionString')]"
 					}
 				}
 			},

@@ -17,6 +17,9 @@
 		"MovieBlobStorage_connectionString": {
 			"value": ""
 		},
+		"OLAP_connectionString": {
+			"value": ""
+		},
 		"containerUri": {
 			"value": ""
 		},
