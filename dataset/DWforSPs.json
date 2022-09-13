@@ -2,7 +2,7 @@
 	"name": "DWforSPs",
 	"properties": {
 		"linkedServiceName": {
-			"referenceName": "AzureSqlDatabase3",
+			"referenceName": "OLAP",
 			"type": "LinkedServiceReference"
 		},
 		"annotations": [],

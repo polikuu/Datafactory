@@ -64,10 +64,7 @@
 				},
 				"userProperties": [],
 				"typeProperties": {
-					"storedProcedureName": {
-						"value": "[Integration].[PopulateDateDimensionForYear]",
-						"type": "Expression"
-					},
+					"storedProcedureName": "[Integration].[PopulateDateDimensionForYear]",
 					"storedProcedureParameters": {
 						"YearNumber": {
 							"value": "2022",
@@ -76,7 +73,7 @@
 					}
 				},
 				"linkedServiceName": {
-					"referenceName": "AzureSqlDatabase3",
+					"referenceName": "OLAP",
 					"type": "LinkedServiceReference"
 				}
 			},
@@ -119,7 +116,7 @@
 							},
 							"userProperties": [],
 							"linkedServiceName": {
-								"referenceName": "AzureSqlDatabase3",
+								"referenceName": "OLAP",
 								"type": "LinkedServiceReference"
 							},
 							"typeProperties": {
@@ -339,7 +336,7 @@
 								}
 							},
 							"linkedServiceName": {
-								"referenceName": "AzureSqlDatabase3",
+								"referenceName": "OLAP",
 								"type": "LinkedServiceReference"
 							}
 						}

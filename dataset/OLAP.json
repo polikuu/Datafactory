@@ -2,7 +2,7 @@
 	"name": "OLAP",
 	"properties": {
 		"linkedServiceName": {
-			"referenceName": "AzureSqlDatabase3",
+			"referenceName": "OLAP",
 			"type": "LinkedServiceReference"
 		},
 		"parameters": {
