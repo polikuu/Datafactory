@@ -73,8 +73,8 @@
 								"referenceName": "OLTP",
 								"type": "DatasetReference",
 								"parameters": {
-									"schemaName": "dbo",
-									"tableName": "tableName"
+									"schemaName": "sys",
+									"tableName": "tables"
 								}
 							},
 							"firstRowOnly": false
@@ -957,7 +957,7 @@
 						"type": "Expression"
 					},
 					"table": {
-						"value": "@dataset().Tablename",
+						"value": "@dataset().TableName",
 						"type": "Expression"
 					}
 				}
@@ -988,11 +988,11 @@
 				"schema": [],
 				"typeProperties": {
 					"schema": {
-						"value": "@dataset().schemaName",
+						"value": "@dataset().SchemaName",
 						"type": "Expression"
 					},
 					"table": {
-						"value": "@dataset().tableName",
+						"value": "@dataset().TableName",
 						"type": "Expression"
 					}
 				}
