@@ -1242,7 +1242,7 @@
 								"referenceName": "Movie_json",
 								"type": "DatasetReference"
 							},
-							"name": "InjestRawMovie"
+							"name": "IngestRawMovie"
 						}
 					],
 					"sinks": [
@@ -1274,8 +1274,8 @@
 						"     validateSchema: false,",
 						"     inferDriftedColumnTypes: true,",
 						"     ignoreNoFilesFound: false,",
-						"     documentForm: 'arrayOfDocuments') ~> InjestRawMovie",
-						"InjestRawMovie foldDown(unroll(movie, movie),",
+						"     documentForm: 'arrayOfDocuments') ~> IngestRawMovie",
+						"IngestRawMovie foldDown(unroll(movie, movie),",
 						"     mapColumn(",
 						"          value = movie",
 						"     ),",

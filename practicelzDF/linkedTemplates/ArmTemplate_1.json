@@ -261,7 +261,7 @@
 								"type": "DataFlowReference",
 								"parameters": {},
 								"datasetParameters": {
-									"InjestRawMovie": {},
+									"IngestRawMovie": {},
 									"SaveToBronze": {}
 								}
 							},
