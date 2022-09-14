@@ -3,39 +3,6 @@
 	"properties": {
 		"activities": [
 			{
-				"name": "RawToBronzeToSilver",
-				"type": "ExecutePipeline",
-				"dependsOn": [],
-				"userProperties": [],
-				"typeProperties": {
-					"pipeline": {
-						"referenceName": "RawToBronzeToSilver",
-						"type": "PipelineReference"
-					},
-					"waitOnCompletion": true
-				}
-			},
-			{
-				"name": "QuarantinedBronzeToSilver",
-				"type": "ExecutePipeline",
-				"dependsOn": [
-					{
-						"activity": "RawToBronzeToSilver",
-						"dependencyConditions": [
-							"Succeeded"
-						]
-					}
-				],
-				"userProperties": [],
-				"typeProperties": {
-					"pipeline": {
-						"referenceName": "QuarantinedBronzeToSilver",
-						"type": "PipelineReference"
-					},
-					"waitOnCompletion": true
-				}
-			},
-			{
 				"name": "OLTPToOLAP",
 				"type": "ExecutePipeline",
 				"dependsOn": [],
@@ -43,6 +10,19 @@
 				"typeProperties": {
 					"pipeline": {
 						"referenceName": "OLTPToOLAP",
+						"type": "PipelineReference"
+					},
+					"waitOnCompletion": true
+				}
+			},
+			{
+				"name": "movies",
+				"type": "ExecutePipeline",
+				"dependsOn": [],
+				"userProperties": [],
+				"typeProperties": {
+					"pipeline": {
+						"referenceName": "movies",
 						"type": "PipelineReference"
 					},
 					"waitOnCompletion": true
