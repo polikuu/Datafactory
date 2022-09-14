@@ -194,7 +194,7 @@
 												"TableName": {
 													"type": "String",
 													"value": {
-														"value": "@{item().Col}",
+														"value": "@{item().Name}",
 														"type": "Expression"
 													}
 												}
@@ -236,7 +236,7 @@
 												"TableName": {
 													"type": "String",
 													"value": {
-														"value": "@{item().Col}",
+														"value": "@{item().name}",
 														"type": "Expression"
 													}
 												}
