@@ -19,9 +19,21 @@
 			"type": "secureString",
 			"metadata": "Secure string for 'connectionString' of 'AzureSqlDatabase3'"
 		},
+		"DW_connectionString": {
+			"type": "secureString",
+			"metadata": "Secure string for 'connectionString' of 'DW'"
+		},
+		"Integration_connectionString": {
+			"type": "secureString",
+			"metadata": "Secure string for 'connectionString' of 'Integration'"
+		},
 		"MovieBlobStorage_connectionString": {
 			"type": "secureString",
 			"metadata": "Secure string for 'connectionString' of 'MovieBlobStorage'"
+		},
+		"ODS_connectionString": {
+			"type": "secureString",
+			"metadata": "Secure string for 'connectionString' of 'ODS'"
 		},
 		"OLAP_connectionString": {
 			"type": "secureString",
@@ -63,8 +75,17 @@
 					"AzureSqlDatabase3_connectionString": {
 						"value": "[parameters('AzureSqlDatabase3_connectionString')]"
 					},
+					"DW_connectionString": {
+						"value": "[parameters('DW_connectionString')]"
+					},
+					"Integration_connectionString": {
+						"value": "[parameters('Integration_connectionString')]"
+					},
 					"MovieBlobStorage_connectionString": {
 						"value": "[parameters('MovieBlobStorage_connectionString')]"
+					},
+					"ODS_connectionString": {
+						"value": "[parameters('ODS_connectionString')]"
 					},
 					"OLAP_connectionString": {
 						"value": "[parameters('OLAP_connectionString')]"

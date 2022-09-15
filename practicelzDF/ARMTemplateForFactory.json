@@ -19,9 +19,21 @@
 			"type": "secureString",
 			"metadata": "Secure string for 'connectionString' of 'AzureSqlDatabase3'"
 		},
+		"DW_connectionString": {
+			"type": "secureString",
+			"metadata": "Secure string for 'connectionString' of 'DW'"
+		},
+		"Integration_connectionString": {
+			"type": "secureString",
+			"metadata": "Secure string for 'connectionString' of 'Integration'"
+		},
 		"MovieBlobStorage_connectionString": {
 			"type": "secureString",
 			"metadata": "Secure string for 'connectionString' of 'MovieBlobStorage'"
+		},
+		"ODS_connectionString": {
+			"type": "secureString",
+			"metadata": "Secure string for 'connectionString' of 'ODS'"
 		},
 		"OLAP_connectionString": {
 			"type": "secureString",
@@ -32,6 +44,101 @@
 		"factoryId": "[concat('Microsoft.DataFactory/factories/', parameters('factoryName'))]"
 	},
 	"resources": [
+		{
+			"name": "[concat(parameters('factoryName'), '/DimEmployeePipeline')]",
+			"type": "Microsoft.DataFactory/factories/pipelines",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"activities": [
+					{
+						"name": "LoadDimEmployee",
+						"type": "ExecuteDataFlow",
+						"dependsOn": [],
+						"policy": {
+							"timeout": "7.00:00:00",
+							"retry": 3,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"dataflow": {
+								"referenceName": "DimEmployeeLoader2",
+								"type": "DataFlowReference",
+								"parameters": {},
+								"datasetParameters": {
+									"Employees1": {},
+									"DimEmployees": {},
+									"sinkNew": {},
+									"sinkUpdates": {},
+									"sinkInactive": {}
+								}
+							},
+							"staging": {},
+							"compute": {
+								"coreCount": 8,
+								"computeType": "General"
+							},
+							"traceLevel": "Fine"
+						}
+					}
+				],
+				"policy": {
+					"elapsedTimeMetric": {},
+					"cancelAfter": {}
+				},
+				"folder": {
+					"name": "Demos"
+				},
+				"annotations": []
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/dataflows/DimEmployeeLoader2')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/Master')]",
+			"type": "Microsoft.DataFactory/factories/pipelines",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"activities": [
+					{
+						"name": "OLTPToOLAP",
+						"type": "ExecutePipeline",
+						"dependsOn": [],
+						"userProperties": [],
+						"typeProperties": {
+							"pipeline": {
+								"referenceName": "OLTPToOLAP",
+								"type": "PipelineReference"
+							},
+							"waitOnCompletion": true,
+							"parameters": {
+								"inputDate": {
+									"value": "@utcnow()",
+									"type": "Expression"
+								}
+							}
+						}
+					}
+				],
+				"policy": {
+					"elapsedTimeMetric": {},
+					"cancelAfter": {}
+				},
+				"parameters": {
+					"inputDate": {
+						"type": "string",
+						"defaultValue": "2022-09-01T13:45:30"
+					}
+				},
+				"annotations": []
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/pipelines/OLTPToOLAP')]"
+			]
+		},
 		{
 			"name": "[concat(parameters('factoryName'), '/OLTPToOLAP')]",
 			"type": "Microsoft.DataFactory/factories/pipelines",
@@ -46,7 +153,7 @@
 						"typeProperties": {
 							"variableName": "TargetETLCutoffTime",
 							"value": {
-								"value": "@utcnow()",
+								"value": "@pipeline().parameters.inputDate",
 								"type": "Expression"
 							}
 						}
@@ -109,7 +216,7 @@
 							}
 						},
 						"linkedServiceName": {
-							"referenceName": "OLAP",
+							"referenceName": "Integration",
 							"type": "LinkedServiceReference"
 						}
 					},
@@ -152,7 +259,7 @@
 									},
 									"userProperties": [],
 									"linkedServiceName": {
-										"referenceName": "OLAP",
+										"referenceName": "DW",
 										"type": "LinkedServiceReference"
 									},
 									"typeProperties": {
@@ -203,7 +310,7 @@
 											"partitionOption": "None"
 										},
 										"dataset": {
-											"referenceName": "DWforSPs",
+											"referenceName": "Integration",
 											"type": "DatasetReference",
 											"parameters": {}
 										}
@@ -245,7 +352,7 @@
 											"partitionOption": "None"
 										},
 										"dataset": {
-											"referenceName": "DWforSPs",
+											"referenceName": "Integration",
 											"type": "DatasetReference",
 											"parameters": {}
 										}
@@ -333,14 +440,14 @@
 									},
 									"inputs": [
 										{
-											"referenceName": "OLTPforSps",
+											"referenceName": "ODS",
 											"type": "DatasetReference",
 											"parameters": {}
 										}
 									],
 									"outputs": [
 										{
-											"referenceName": "OLAP",
+											"referenceName": "DW",
 											"type": "DatasetReference",
 											"parameters": {
 												"SchemaName": "Integration",
@@ -375,7 +482,7 @@
 										}
 									},
 									"linkedServiceName": {
-										"referenceName": "OLAP",
+										"referenceName": "DW",
 										"type": "LinkedServiceReference"
 									}
 								}
@@ -386,6 +493,11 @@
 				"policy": {
 					"elapsedTimeMetric": {},
 					"cancelAfter": {}
+				},
+				"parameters": {
+					"inputDate": {
+						"type": "string"
+					}
 				},
 				"variables": {
 					"TargetETLCutoffTime": {
@@ -405,10 +517,11 @@
 			},
 			"dependsOn": [
 				"[concat(variables('factoryId'), '/datasets/OLTP')]",
-				"[concat(variables('factoryId'), '/linkedServices/OLAP')]",
-				"[concat(variables('factoryId'), '/datasets/DWforSPs')]",
-				"[concat(variables('factoryId'), '/datasets/OLTPforSps')]",
-				"[concat(variables('factoryId'), '/datasets/OLAP')]"
+				"[concat(variables('factoryId'), '/linkedServices/Integration')]",
+				"[concat(variables('factoryId'), '/linkedServices/DW')]",
+				"[concat(variables('factoryId'), '/datasets/Integration')]",
+				"[concat(variables('factoryId'), '/datasets/ODS')]",
+				"[concat(variables('factoryId'), '/datasets/DW')]"
 			]
 		},
 		{
@@ -603,7 +716,42 @@
 			]
 		},
 		{
-			"name": "[concat(parameters('factoryName'), '/DWforSPs')]",
+			"name": "[concat(parameters('factoryName'), '/DW')]",
+			"type": "Microsoft.DataFactory/factories/datasets",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "DW",
+					"type": "LinkedServiceReference"
+				},
+				"parameters": {
+					"SchemaName": {
+						"type": "string"
+					},
+					"Tablename": {
+						"type": "string"
+					}
+				},
+				"annotations": [],
+				"type": "AzureSqlTable",
+				"schema": [],
+				"typeProperties": {
+					"schema": {
+						"value": "@dataset().SchemaName",
+						"type": "Expression"
+					},
+					"table": {
+						"value": "@dataset().Tablename",
+						"type": "Expression"
+					}
+				}
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/linkedServices/DW')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/DimEmp')]",
 			"type": "Microsoft.DataFactory/factories/datasets",
 			"apiVersion": "2018-06-01",
 			"properties": {
@@ -613,8 +761,59 @@
 				},
 				"annotations": [],
 				"type": "AzureSqlTable",
-				"schema": [],
-				"typeProperties": {}
+				"schema": [
+					{
+						"name": "EmpID",
+						"type": "int",
+						"precision": 10
+					},
+					{
+						"name": "surrogatekey",
+						"type": "nvarchar"
+					},
+					{
+						"name": "Region",
+						"type": "nvarchar"
+					},
+					{
+						"name": "Status",
+						"type": "nvarchar"
+					},
+					{
+						"name": "EmpFunction",
+						"type": "nvarchar"
+					},
+					{
+						"name": "Level",
+						"type": "nvarchar"
+					},
+					{
+						"name": "Role",
+						"type": "nvarchar"
+					},
+					{
+						"name": "StartDate",
+						"type": "date"
+					},
+					{
+						"name": "EndDate",
+						"type": "date"
+					},
+					{
+						"name": "iscurrent",
+						"type": "int",
+						"precision": 10
+					},
+					{
+						"name": "processtime",
+						"type": "datetime",
+						"precision": 23,
+						"scale": 3
+					}
+				],
+				"typeProperties": {
+					"tableName": "[[dbo].[DimEmp]"
+				}
 			},
 			"dependsOn": [
 				"[concat(variables('factoryId'), '/linkedServices/OLAP')]"
@@ -716,6 +915,66 @@
 			]
 		},
 		{
+			"name": "[concat(parameters('factoryName'), '/EmployeeFiles1')]",
+			"type": "Microsoft.DataFactory/factories/datasets",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "MovieBlobStorage",
+					"type": "LinkedServiceReference"
+				},
+				"annotations": [],
+				"type": "DelimitedText",
+				"typeProperties": {
+					"location": {
+						"type": "AzureBlobStorageLocation",
+						"container": "mycontainer"
+					},
+					"columnDelimiter": ",",
+					"escapeChar": "\\",
+					"firstRowAsHeader": true,
+					"quoteChar": "\""
+				},
+				"schema": [
+					{
+						"name": "EmpID",
+						"type": "String"
+					},
+					{
+						"name": "Region",
+						"type": "String"
+					},
+					{
+						"name": "Status",
+						"type": "String"
+					},
+					{
+						"name": "Function",
+						"type": "String"
+					},
+					{
+						"name": "Level",
+						"type": "String"
+					},
+					{
+						"name": "Role",
+						"type": "String"
+					},
+					{
+						"name": "StartDate",
+						"type": "String"
+					},
+					{
+						"name": "EndDate",
+						"type": "String"
+					}
+				]
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/linkedServices/MovieBlobStorage')]"
+			]
+		},
+		{
 			"name": "[concat(parameters('factoryName'), '/Genres_silver')]",
 			"type": "Microsoft.DataFactory/factories/datasets",
 			"apiVersion": "2018-06-01",
@@ -741,6 +1000,24 @@
 			},
 			"dependsOn": [
 				"[concat(variables('factoryId'), '/linkedServices/MovieBlobStorage')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/Integration')]",
+			"type": "Microsoft.DataFactory/factories/datasets",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "Integration",
+					"type": "LinkedServiceReference"
+				},
+				"annotations": [],
+				"type": "AzureSqlTable",
+				"schema": [],
+				"typeProperties": {}
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/linkedServices/Integration')]"
 			]
 		},
 		{
@@ -932,38 +1209,21 @@
 			]
 		},
 		{
-			"name": "[concat(parameters('factoryName'), '/OLAP')]",
+			"name": "[concat(parameters('factoryName'), '/ODS')]",
 			"type": "Microsoft.DataFactory/factories/datasets",
 			"apiVersion": "2018-06-01",
 			"properties": {
 				"linkedServiceName": {
-					"referenceName": "OLAP",
+					"referenceName": "ODS",
 					"type": "LinkedServiceReference"
-				},
-				"parameters": {
-					"SchemaName": {
-						"type": "string"
-					},
-					"Tablename": {
-						"type": "string"
-					}
 				},
 				"annotations": [],
 				"type": "AzureSqlTable",
 				"schema": [],
-				"typeProperties": {
-					"schema": {
-						"value": "@dataset().SchemaName",
-						"type": "Expression"
-					},
-					"table": {
-						"value": "@dataset().Tablename",
-						"type": "Expression"
-					}
-				}
+				"typeProperties": {}
 			},
 			"dependsOn": [
-				"[concat(variables('factoryId'), '/linkedServices/OLAP')]"
+				"[concat(variables('factoryId'), '/linkedServices/ODS')]"
 			]
 		},
 		{
@@ -996,24 +1256,6 @@
 						"type": "Expression"
 					}
 				}
-			},
-			"dependsOn": [
-				"[concat(variables('factoryId'), '/linkedServices/AzureSqlDatabase3')]"
-			]
-		},
-		{
-			"name": "[concat(parameters('factoryName'), '/OLTPforSps')]",
-			"type": "Microsoft.DataFactory/factories/datasets",
-			"apiVersion": "2018-06-01",
-			"properties": {
-				"linkedServiceName": {
-					"referenceName": "AzureSqlDatabase3",
-					"type": "LinkedServiceReference"
-				},
-				"annotations": [],
-				"type": "AzureSqlTable",
-				"schema": [],
-				"typeProperties": {}
 			},
 			"dependsOn": [
 				"[concat(variables('factoryId'), '/linkedServices/AzureSqlDatabase3')]"
@@ -1087,6 +1329,32 @@
 			"dependsOn": []
 		},
 		{
+			"name": "[concat(parameters('factoryName'), '/DW')]",
+			"type": "Microsoft.DataFactory/factories/linkedServices",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"annotations": [],
+				"type": "AzureSqlDatabase",
+				"typeProperties": {
+					"connectionString": "[parameters('DW_connectionString')]"
+				}
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/Integration')]",
+			"type": "Microsoft.DataFactory/factories/linkedServices",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"annotations": [],
+				"type": "AzureSqlDatabase",
+				"typeProperties": {
+					"connectionString": "[parameters('Integration_connectionString')]"
+				}
+			},
+			"dependsOn": []
+		},
+		{
 			"name": "[concat(parameters('factoryName'), '/MovieBlobStorage')]",
 			"type": "Microsoft.DataFactory/factories/linkedServices",
 			"apiVersion": "2018-06-01",
@@ -1095,6 +1363,19 @@
 				"type": "AzureBlobStorage",
 				"typeProperties": {
 					"connectionString": "[parameters('MovieBlobStorage_connectionString')]"
+				}
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/ODS')]",
+			"type": "Microsoft.DataFactory/factories/linkedServices",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"annotations": [],
+				"type": "AzureSqlDatabase",
+				"typeProperties": {
+					"connectionString": "[parameters('ODS_connectionString')]"
 				}
 			},
 			"dependsOn": []
@@ -1421,6 +1702,275 @@
 			]
 		},
 		{
+			"name": "[concat(parameters('factoryName'), '/DimEmployeeLoader2')]",
+			"type": "Microsoft.DataFactory/factories/dataflows",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"type": "MappingDataFlow",
+				"typeProperties": {
+					"sources": [
+						{
+							"dataset": {
+								"referenceName": "EmployeeFiles1",
+								"type": "DatasetReference"
+							},
+							"name": "Employees1",
+							"description": " Source employees file, changes every day"
+						},
+						{
+							"dataset": {
+								"referenceName": "DimEmp",
+								"type": "DatasetReference"
+							},
+							"name": "DimEmployees",
+							"description": "Current rows in DimEmployees DW table"
+						}
+					],
+					"sinks": [
+						{
+							"dataset": {
+								"referenceName": "DimEmp",
+								"type": "DatasetReference"
+							},
+							"name": "sinkNew",
+							"description": " "
+						},
+						{
+							"dataset": {
+								"referenceName": "DimEmp",
+								"type": "DatasetReference"
+							},
+							"name": "sinkUpdates",
+							"description": " "
+						},
+						{
+							"dataset": {
+								"referenceName": "DimEmp",
+								"type": "DatasetReference"
+							},
+							"name": "sinkInactive",
+							"description": " Age out old rows"
+						}
+					],
+					"transformations": [
+						{
+							"name": "TypeConversions"
+						},
+						{
+							"name": "TypeConversionsAndSetAttrs"
+						},
+						{
+							"name": "LookupIDs"
+						},
+						{
+							"name": "ConditionalSplit1"
+						},
+						{
+							"name": "checkForChanges"
+						},
+						{
+							"name": "SetAttrsForNew"
+						},
+						{
+							"name": "SetAttrsInactive",
+							"description": "make iscurrent 0"
+						},
+						{
+							"name": "SetAttrsUpdate"
+						},
+						{
+							"name": "NormNames"
+						},
+						{
+							"name": "InactiveFields"
+						},
+						{
+							"name": "AlterRow1"
+						},
+						{
+							"name": "NullFilter",
+							"description": "Filter out NULLs from source file"
+						},
+						{
+							"name": "NameNorm2"
+						}
+					],
+					"scriptLines": [
+						"source(output(",
+						"          EmpID as string,",
+						"          Region as string,",
+						"          Status as string,",
+						"          Function as string,",
+						"          Level as string,",
+						"          Role as string,",
+						"          StartDate as string,",
+						"          EndDate as string",
+						"     ),",
+						"     allowSchemaDrift: true,",
+						"     validateSchema: false,",
+						"     ignoreNoFilesFound: false,",
+						"     purgeFiles: true,",
+						"     wildcardPaths:['SampleData/Emps/today/*.csv']) ~> Employees1",
+						"source(output(",
+						"          EmpID as integer,",
+						"          surrogatekey as string,",
+						"          Region as string,",
+						"          Status as string,",
+						"          EmpFunction as string,",
+						"          Level as string,",
+						"          Role as string,",
+						"          StartDate as date,",
+						"          EndDate as date,",
+						"          iscurrent as integer,",
+						"          processtime as timestamp",
+						"     ),",
+						"     allowSchemaDrift: true,",
+						"     validateSchema: false,",
+						"     isolationLevel: 'READ_UNCOMMITTED',",
+						"     format: 'table') ~> DimEmployees",
+						"DimEmployees derive(EmpID = toInteger(EmpID)) ~> TypeConversions",
+						"NullFilter derive(EmpID = toInteger(EmpID),",
+						"          StartDate = toDate(StartDate,'MM/dd/yyyy'),",
+						"          EndDate = toDate(EndDate,'MM/dd/yyyy'),",
+						"          processtime = currentTimestamp()) ~> TypeConversionsAndSetAttrs",
+						"TypeConversionsAndSetAttrs, TypeConversions lookup(TypeConversionsAndSetAttrs@EmpID == TypeConversions@EmpID,",
+						"     multiple: true,",
+						"     broadcast: 'auto')~> LookupIDs",
+						"NormNames split(isNull(iscurrent),",
+						"     disjoint: false) ~> ConditionalSplit1@(NewRow, CheckForUpdates)",
+						"NameNorm2, TypeConversions exists(NameNorm2@EmpID == TypeConversions@EmpID,",
+						"     negate:false,",
+						"     broadcast: 'auto')~> checkForChanges",
+						"ConditionalSplit1@NewRow derive(iscurrent = 1,",
+						"          surrogatekey = toString(crc32(EmpID,EmpFunction))) ~> SetAttrsForNew",
+						"checkForChanges derive(iscurrent = 0) ~> SetAttrsInactive",
+						"checkForChanges derive(iscurrent = 1) ~> SetAttrsUpdate",
+						"LookupIDs select(mapColumn(",
+						"          EmpID = TypeConversionsAndSetAttrs@EmpID,",
+						"          Region = Employees1@Region,",
+						"          Status = Employees1@Status,",
+						"          Level = Employees1@Level,",
+						"          Role = Employees1@Role,",
+						"          StartDate = TypeConversionsAndSetAttrs@StartDate,",
+						"          EndDate = TypeConversionsAndSetAttrs@EndDate,",
+						"          EmpFunction = Function,",
+						"          iscurrent,",
+						"          processtime = TypeConversionsAndSetAttrs@processtime,",
+						"          surrogatekey",
+						"     ),",
+						"     skipDuplicateMapInputs: false,",
+						"     skipDuplicateMapOutputs: false) ~> NormNames",
+						"SetAttrsInactive select(mapColumn(",
+						"          EmpID,",
+						"          Status,",
+						"          EndDate,",
+						"          iscurrent,",
+						"          processtime",
+						"     ),",
+						"     skipDuplicateMapInputs: false,",
+						"     skipDuplicateMapOutputs: false) ~> InactiveFields",
+						"InactiveFields alterRow(updateIf(true())) ~> AlterRow1",
+						"Employees1 filter(!isNull(EmpID)) ~> NullFilter",
+						"ConditionalSplit1@CheckForUpdates select(mapColumn(",
+						"          EmpID,",
+						"          Region,",
+						"          Status,",
+						"          Level,",
+						"          Role,",
+						"          StartDate,",
+						"          EndDate,",
+						"          EmpFunction,",
+						"          iscurrent,",
+						"          processtime,",
+						"          surrogatekey",
+						"     ),",
+						"     skipDuplicateMapInputs: false,",
+						"     skipDuplicateMapOutputs: false) ~> NameNorm2",
+						"SetAttrsForNew sink(allowSchemaDrift: true,",
+						"     validateSchema: false,",
+						"     input(",
+						"          EmpID as integer,",
+						"          surrogatekey as string,",
+						"          Region as string,",
+						"          Status as string,",
+						"          EmpFunction as string,",
+						"          Level as string,",
+						"          Role as string,",
+						"          StartDate as date,",
+						"          EndDate as date,",
+						"          iscurrent as integer,",
+						"          processtime as timestamp",
+						"     ),",
+						"     deletable:false,",
+						"     insertable:true,",
+						"     updateable:false,",
+						"     upsertable:false,",
+						"     format: 'table',",
+						"     batchSize: 50,",
+						"     errorHandlingOption: 'stopOnFirstError',",
+						"     partitionBy('roundRobin', 4)) ~> sinkNew",
+						"SetAttrsUpdate sink(allowSchemaDrift: true,",
+						"     validateSchema: false,",
+						"     input(",
+						"          EmpID as integer,",
+						"          surrogatekey as string,",
+						"          Region as string,",
+						"          Status as string,",
+						"          EmpFunction as string,",
+						"          Level as string,",
+						"          Role as string,",
+						"          StartDate as date,",
+						"          EndDate as date,",
+						"          iscurrent as integer,",
+						"          processtime as timestamp",
+						"     ),",
+						"     deletable:false,",
+						"     insertable:true,",
+						"     updateable:false,",
+						"     upsertable:false,",
+						"     format: 'table',",
+						"     batchSize: 50,",
+						"     errorHandlingOption: 'stopOnFirstError',",
+						"     partitionBy('roundRobin', 4)) ~> sinkUpdates",
+						"AlterRow1 sink(allowSchemaDrift: true,",
+						"     validateSchema: false,",
+						"     input(",
+						"          EmpID as integer,",
+						"          surrogatekey as string,",
+						"          Region as string,",
+						"          Status as string,",
+						"          EmpFunction as string,",
+						"          Level as string,",
+						"          Role as string,",
+						"          StartDate as date,",
+						"          EndDate as date,",
+						"          iscurrent as integer,",
+						"          processtime as timestamp",
+						"     ),",
+						"     deletable:false,",
+						"     insertable:false,",
+						"     updateable:true,",
+						"     upsertable:false,",
+						"     keys:['EmpID'],",
+						"     format: 'table',",
+						"     batchSize: 50,",
+						"     errorHandlingOption: 'stopOnFirstError',",
+						"     mapColumn(",
+						"          EmpID,",
+						"          EndDate,",
+						"          iscurrent,",
+						"          processtime",
+						"     ),",
+						"     partitionBy('roundRobin', 4)) ~> sinkInactive"
+					]
+				}
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/datasets/EmployeeFiles1')]",
+				"[concat(variables('factoryId'), '/datasets/DimEmp')]"
+			]
+		},
+		{
 			"name": "[concat(parameters('factoryName'), '/Raw_To_Bronze')]",
 			"type": "Microsoft.DataFactory/factories/dataflows",
 			"apiVersion": "2018-06-01",
@@ -1671,52 +2221,6 @@
 			"dependsOn": [
 				"[concat(variables('factoryId'), '/datasets/Movie_Bronze')]",
 				"[concat(variables('factoryId'), '/datasets/Movie_silver')]"
-			]
-		},
-		{
-			"name": "[concat(parameters('factoryName'), '/Master')]",
-			"type": "Microsoft.DataFactory/factories/pipelines",
-			"apiVersion": "2018-06-01",
-			"properties": {
-				"activities": [
-					{
-						"name": "OLTPToOLAP",
-						"type": "ExecutePipeline",
-						"dependsOn": [],
-						"userProperties": [],
-						"typeProperties": {
-							"pipeline": {
-								"referenceName": "OLTPToOLAP",
-								"type": "PipelineReference"
-							},
-							"waitOnCompletion": true,
-							"parameters": {}
-						}
-					},
-					{
-						"name": "movies",
-						"type": "ExecutePipeline",
-						"dependsOn": [],
-						"userProperties": [],
-						"typeProperties": {
-							"pipeline": {
-								"referenceName": "movies",
-								"type": "PipelineReference"
-							},
-							"waitOnCompletion": true,
-							"parameters": {}
-						}
-					}
-				],
-				"policy": {
-					"elapsedTimeMetric": {},
-					"cancelAfter": {}
-				},
-				"annotations": []
-			},
-			"dependsOn": [
-				"[concat(variables('factoryId'), '/pipelines/OLTPToOLAP')]",
-				"[concat(variables('factoryId'), '/pipelines/movies')]"
 			]
 		}
 	]

@@ -14,7 +14,16 @@
 		"AzureSqlDatabase3_connectionString": {
 			"value": ""
 		},
+		"DW_connectionString": {
+			"value": ""
+		},
+		"Integration_connectionString": {
+			"value": ""
+		},
 		"MovieBlobStorage_connectionString": {
+			"value": ""
+		},
+		"ODS_connectionString": {
 			"value": ""
 		},
 		"OLAP_connectionString": {

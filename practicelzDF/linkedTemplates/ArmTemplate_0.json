@@ -19,9 +19,21 @@
 			"type": "secureString",
 			"metadata": "Secure string for 'connectionString' of 'AzureSqlDatabase3'"
 		},
+		"DW_connectionString": {
+			"type": "secureString",
+			"metadata": "Secure string for 'connectionString' of 'DW'"
+		},
+		"Integration_connectionString": {
+			"type": "secureString",
+			"metadata": "Secure string for 'connectionString' of 'Integration'"
+		},
 		"MovieBlobStorage_connectionString": {
 			"type": "secureString",
 			"metadata": "Secure string for 'connectionString' of 'MovieBlobStorage'"
+		},
+		"ODS_connectionString": {
+			"type": "secureString",
+			"metadata": "Secure string for 'connectionString' of 'ODS'"
 		},
 		"OLAP_connectionString": {
 			"type": "secureString",
@@ -72,6 +84,32 @@
 			"dependsOn": []
 		},
 		{
+			"name": "[concat(parameters('factoryName'), '/DW')]",
+			"type": "Microsoft.DataFactory/factories/linkedServices",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"annotations": [],
+				"type": "AzureSqlDatabase",
+				"typeProperties": {
+					"connectionString": "[parameters('DW_connectionString')]"
+				}
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/Integration')]",
+			"type": "Microsoft.DataFactory/factories/linkedServices",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"annotations": [],
+				"type": "AzureSqlDatabase",
+				"typeProperties": {
+					"connectionString": "[parameters('Integration_connectionString')]"
+				}
+			},
+			"dependsOn": []
+		},
+		{
 			"name": "[concat(parameters('factoryName'), '/MovieBlobStorage')]",
 			"type": "Microsoft.DataFactory/factories/linkedServices",
 			"apiVersion": "2018-06-01",
@@ -80,6 +118,19 @@
 				"type": "AzureBlobStorage",
 				"typeProperties": {
 					"connectionString": "[parameters('MovieBlobStorage_connectionString')]"
+				}
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/ODS')]",
+			"type": "Microsoft.DataFactory/factories/linkedServices",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"annotations": [],
+				"type": "AzureSqlDatabase",
+				"typeProperties": {
+					"connectionString": "[parameters('ODS_connectionString')]"
 				}
 			},
 			"dependsOn": []
@@ -98,7 +149,42 @@
 			"dependsOn": []
 		},
 		{
-			"name": "[concat(parameters('factoryName'), '/DWforSPs')]",
+			"name": "[concat(parameters('factoryName'), '/DW')]",
+			"type": "Microsoft.DataFactory/factories/datasets",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "DW",
+					"type": "LinkedServiceReference"
+				},
+				"parameters": {
+					"SchemaName": {
+						"type": "string"
+					},
+					"Tablename": {
+						"type": "string"
+					}
+				},
+				"annotations": [],
+				"type": "AzureSqlTable",
+				"schema": [],
+				"typeProperties": {
+					"schema": {
+						"value": "@dataset().SchemaName",
+						"type": "Expression"
+					},
+					"table": {
+						"value": "@dataset().Tablename",
+						"type": "Expression"
+					}
+				}
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/linkedServices/DW')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/DimEmp')]",
 			"type": "Microsoft.DataFactory/factories/datasets",
 			"apiVersion": "2018-06-01",
 			"properties": {
@@ -108,8 +194,59 @@
 				},
 				"annotations": [],
 				"type": "AzureSqlTable",
-				"schema": [],
-				"typeProperties": {}
+				"schema": [
+					{
+						"name": "EmpID",
+						"type": "int",
+						"precision": 10
+					},
+					{
+						"name": "surrogatekey",
+						"type": "nvarchar"
+					},
+					{
+						"name": "Region",
+						"type": "nvarchar"
+					},
+					{
+						"name": "Status",
+						"type": "nvarchar"
+					},
+					{
+						"name": "EmpFunction",
+						"type": "nvarchar"
+					},
+					{
+						"name": "Level",
+						"type": "nvarchar"
+					},
+					{
+						"name": "Role",
+						"type": "nvarchar"
+					},
+					{
+						"name": "StartDate",
+						"type": "date"
+					},
+					{
+						"name": "EndDate",
+						"type": "date"
+					},
+					{
+						"name": "iscurrent",
+						"type": "int",
+						"precision": 10
+					},
+					{
+						"name": "processtime",
+						"type": "datetime",
+						"precision": 23,
+						"scale": 3
+					}
+				],
+				"typeProperties": {
+					"tableName": "[[dbo].[DimEmp]"
+				}
 			},
 			"dependsOn": [
 				"[concat(variables('factoryId'), '/linkedServices/OLAP')]"
@@ -211,6 +348,66 @@
 			]
 		},
 		{
+			"name": "[concat(parameters('factoryName'), '/EmployeeFiles1')]",
+			"type": "Microsoft.DataFactory/factories/datasets",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "MovieBlobStorage",
+					"type": "LinkedServiceReference"
+				},
+				"annotations": [],
+				"type": "DelimitedText",
+				"typeProperties": {
+					"location": {
+						"type": "AzureBlobStorageLocation",
+						"container": "mycontainer"
+					},
+					"columnDelimiter": ",",
+					"escapeChar": "\\",
+					"firstRowAsHeader": true,
+					"quoteChar": "\""
+				},
+				"schema": [
+					{
+						"name": "EmpID",
+						"type": "String"
+					},
+					{
+						"name": "Region",
+						"type": "String"
+					},
+					{
+						"name": "Status",
+						"type": "String"
+					},
+					{
+						"name": "Function",
+						"type": "String"
+					},
+					{
+						"name": "Level",
+						"type": "String"
+					},
+					{
+						"name": "Role",
+						"type": "String"
+					},
+					{
+						"name": "StartDate",
+						"type": "String"
+					},
+					{
+						"name": "EndDate",
+						"type": "String"
+					}
+				]
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/linkedServices/MovieBlobStorage')]"
+			]
+		},
+		{
 			"name": "[concat(parameters('factoryName'), '/Genres_silver')]",
 			"type": "Microsoft.DataFactory/factories/datasets",
 			"apiVersion": "2018-06-01",
@@ -236,6 +433,24 @@
 			},
 			"dependsOn": [
 				"[concat(variables('factoryId'), '/linkedServices/MovieBlobStorage')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/Integration')]",
+			"type": "Microsoft.DataFactory/factories/datasets",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "Integration",
+					"type": "LinkedServiceReference"
+				},
+				"annotations": [],
+				"type": "AzureSqlTable",
+				"schema": [],
+				"typeProperties": {}
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/linkedServices/Integration')]"
 			]
 		},
 		{
@@ -427,82 +642,12 @@
 			]
 		},
 		{
-			"name": "[concat(parameters('factoryName'), '/OLAP')]",
+			"name": "[concat(parameters('factoryName'), '/ODS')]",
 			"type": "Microsoft.DataFactory/factories/datasets",
 			"apiVersion": "2018-06-01",
 			"properties": {
 				"linkedServiceName": {
-					"referenceName": "OLAP",
-					"type": "LinkedServiceReference"
-				},
-				"parameters": {
-					"SchemaName": {
-						"type": "string"
-					},
-					"Tablename": {
-						"type": "string"
-					}
-				},
-				"annotations": [],
-				"type": "AzureSqlTable",
-				"schema": [],
-				"typeProperties": {
-					"schema": {
-						"value": "@dataset().SchemaName",
-						"type": "Expression"
-					},
-					"table": {
-						"value": "@dataset().Tablename",
-						"type": "Expression"
-					}
-				}
-			},
-			"dependsOn": [
-				"[concat(variables('factoryId'), '/linkedServices/OLAP')]"
-			]
-		},
-		{
-			"name": "[concat(parameters('factoryName'), '/OLTP')]",
-			"type": "Microsoft.DataFactory/factories/datasets",
-			"apiVersion": "2018-06-01",
-			"properties": {
-				"linkedServiceName": {
-					"referenceName": "AzureSqlDatabase3",
-					"type": "LinkedServiceReference"
-				},
-				"parameters": {
-					"SchemaName": {
-						"type": "string"
-					},
-					"TableName": {
-						"type": "string"
-					}
-				},
-				"annotations": [],
-				"type": "AzureSqlTable",
-				"schema": [],
-				"typeProperties": {
-					"schema": {
-						"value": "@dataset().SchemaName",
-						"type": "Expression"
-					},
-					"table": {
-						"value": "@dataset().TableName",
-						"type": "Expression"
-					}
-				}
-			},
-			"dependsOn": [
-				"[concat(variables('factoryId'), '/linkedServices/AzureSqlDatabase3')]"
-			]
-		},
-		{
-			"name": "[concat(parameters('factoryName'), '/OLTPforSps')]",
-			"type": "Microsoft.DataFactory/factories/datasets",
-			"apiVersion": "2018-06-01",
-			"properties": {
-				"linkedServiceName": {
-					"referenceName": "AzureSqlDatabase3",
+					"referenceName": "ODS",
 					"type": "LinkedServiceReference"
 				},
 				"annotations": [],
@@ -511,795 +656,7 @@
 				"typeProperties": {}
 			},
 			"dependsOn": [
-				"[concat(variables('factoryId'), '/linkedServices/AzureSqlDatabase3')]"
-			]
-		},
-		{
-			"name": "[concat(parameters('factoryName'), '/movie_genre_junction_silver')]",
-			"type": "Microsoft.DataFactory/factories/datasets",
-			"apiVersion": "2018-06-01",
-			"properties": {
-				"linkedServiceName": {
-					"referenceName": "MovieBlobStorage",
-					"type": "LinkedServiceReference"
-				},
-				"folder": {
-					"name": "Movie"
-				},
-				"annotations": [],
-				"type": "Parquet",
-				"typeProperties": {
-					"location": {
-						"type": "AzureBlobStorageLocation",
-						"folderPath": "result/silver/junction",
-						"container": "etloutput"
-					},
-					"compressionCodec": "snappy"
-				},
-				"schema": []
-			},
-			"dependsOn": [
-				"[concat(variables('factoryId'), '/linkedServices/MovieBlobStorage')]"
-			]
-		},
-		{
-			"name": "[concat(parameters('factoryName'), '/OLTPToOLAP')]",
-			"type": "Microsoft.DataFactory/factories/pipelines",
-			"apiVersion": "2018-06-01",
-			"properties": {
-				"activities": [
-					{
-						"name": "Calculate ETL Cutoff Time",
-						"type": "SetVariable",
-						"dependsOn": [],
-						"userProperties": [],
-						"typeProperties": {
-							"variableName": "TargetETLCutoffTime",
-							"value": {
-								"value": "@utcnow()",
-								"type": "Expression"
-							}
-						}
-					},
-					{
-						"name": "LookupTableName",
-						"type": "Lookup",
-						"dependsOn": [],
-						"policy": {
-							"timeout": "7.00:00:00",
-							"retry": 0,
-							"retryIntervalInSeconds": 30,
-							"secureOutput": false,
-							"secureInput": false
-						},
-						"userProperties": [],
-						"typeProperties": {
-							"source": {
-								"type": "AzureSqlSource",
-								"queryTimeout": "02:00:00",
-								"partitionOption": "None"
-							},
-							"dataset": {
-								"referenceName": "OLTP",
-								"type": "DatasetReference",
-								"parameters": {
-									"SchemaName": "dbo",
-									"TableName": "TableName"
-								}
-							},
-							"firstRowOnly": false
-						}
-					},
-					{
-						"name": "Ensure DateDim includes current year",
-						"type": "SqlServerStoredProcedure",
-						"dependsOn": [
-							{
-								"activity": "Calculate ETL Cutoff Time",
-								"dependencyConditions": [
-									"Succeeded"
-								]
-							}
-						],
-						"policy": {
-							"timeout": "7.00:00:00",
-							"retry": 0,
-							"retryIntervalInSeconds": 30,
-							"secureOutput": false,
-							"secureInput": false
-						},
-						"userProperties": [],
-						"typeProperties": {
-							"storedProcedureName": "[[Integration].[PopulateDateDimensionForYear]",
-							"storedProcedureParameters": {
-								"YearNumber": {
-									"value": "2022",
-									"type": "Int32"
-								}
-							}
-						},
-						"linkedServiceName": {
-							"referenceName": "OLAP",
-							"type": "LinkedServiceReference"
-						}
-					},
-					{
-						"name": "ForEachTable",
-						"type": "ForEach",
-						"dependsOn": [
-							{
-								"activity": "LookupTableName",
-								"dependencyConditions": [
-									"Succeeded"
-								]
-							}
-						],
-						"userProperties": [],
-						"typeProperties": {
-							"items": {
-								"value": "@activity('LookupTableName').output.value",
-								"type": "Expression"
-							},
-							"isSequential": true,
-							"activities": [
-								{
-									"name": "Truncate Table_Staging",
-									"type": "Script",
-									"dependsOn": [
-										{
-											"activity": "LookupLineageKey",
-											"dependencyConditions": [
-												"Succeeded"
-											]
-										}
-									],
-									"policy": {
-										"timeout": "7.00:00:00",
-										"retry": 0,
-										"retryIntervalInSeconds": 30,
-										"secureOutput": false,
-										"secureInput": false
-									},
-									"userProperties": [],
-									"linkedServiceName": {
-										"referenceName": "OLAP",
-										"type": "LinkedServiceReference"
-									},
-									"typeProperties": {
-										"scripts": [
-											{
-												"type": "Query",
-												"text": {
-													"value": "DELETE FROM Integration.@{item().Name}_Staging",
-													"type": "Expression"
-												}
-											}
-										]
-									}
-								},
-								{
-									"name": "LookupLineageKey",
-									"type": "Lookup",
-									"dependsOn": [],
-									"policy": {
-										"timeout": "7.00:00:00",
-										"retry": 0,
-										"retryIntervalInSeconds": 30,
-										"secureOutput": false,
-										"secureInput": false
-									},
-									"userProperties": [],
-									"typeProperties": {
-										"source": {
-											"type": "AzureSqlSource",
-											"sqlReaderStoredProcedureName": "[[Integration].[GetLineageKey]",
-											"storedProcedureParameters": {
-												"NewCutoffTime": {
-													"type": "DateTime",
-													"value": {
-														"value": "@variables('TargetETLCutoffTime')",
-														"type": "Expression"
-													}
-												},
-												"TableName": {
-													"type": "String",
-													"value": {
-														"value": "@{item().Name}",
-														"type": "Expression"
-													}
-												}
-											},
-											"queryTimeout": "02:00:00",
-											"partitionOption": "None"
-										},
-										"dataset": {
-											"referenceName": "DWforSPs",
-											"type": "DatasetReference",
-											"parameters": {}
-										}
-									}
-								},
-								{
-									"name": "LookupETLCutoffTime",
-									"type": "Lookup",
-									"dependsOn": [
-										{
-											"activity": "Truncate Table_Staging",
-											"dependencyConditions": [
-												"Succeeded"
-											]
-										}
-									],
-									"policy": {
-										"timeout": "7.00:00:00",
-										"retry": 0,
-										"retryIntervalInSeconds": 30,
-										"secureOutput": false,
-										"secureInput": false
-									},
-									"userProperties": [],
-									"typeProperties": {
-										"source": {
-											"type": "AzureSqlSource",
-											"sqlReaderStoredProcedureName": "[[Integration].[GetLastETLCutoffTime]",
-											"storedProcedureParameters": {
-												"TableName": {
-													"type": "String",
-													"value": {
-														"value": "@{item().name}",
-														"type": "Expression"
-													}
-												}
-											},
-											"queryTimeout": "02:00:00",
-											"partitionOption": "None"
-										},
-										"dataset": {
-											"referenceName": "DWforSPs",
-											"type": "DatasetReference",
-											"parameters": {}
-										}
-									}
-								},
-								{
-									"name": "Set LastCutoffTime",
-									"type": "SetVariable",
-									"dependsOn": [
-										{
-											"activity": "LookupETLCutoffTime",
-											"dependencyConditions": [
-												"Succeeded"
-											]
-										}
-									],
-									"userProperties": [],
-									"typeProperties": {
-										"variableName": "LastETLCutoffTime",
-										"value": {
-											"value": "@{activity('LookupETLCutoffTime').output.firstRow.CutoffTime}",
-											"type": "Expression"
-										}
-									}
-								},
-								{
-									"name": "ExtractUpdatedDataToIntegration",
-									"type": "Copy",
-									"dependsOn": [
-										{
-											"activity": "Set LastCutoffTime",
-											"dependencyConditions": [
-												"Succeeded"
-											]
-										}
-									],
-									"policy": {
-										"timeout": "7.00:00:00",
-										"retry": 0,
-										"retryIntervalInSeconds": 30,
-										"secureOutput": false,
-										"secureInput": false
-									},
-									"userProperties": [],
-									"typeProperties": {
-										"source": {
-											"type": "AzureSqlSource",
-											"sqlReaderStoredProcedureName": {
-												"value": "[[Integration].[Get@{item().Name}Updates]",
-												"type": "Expression"
-											},
-											"storedProcedureParameters": {
-												"LastCutoff": {
-													"type": "DateTime",
-													"value": {
-														"value": "@variables('LastETLCutoffTime')",
-														"type": "Expression"
-													}
-												},
-												"NewCutoff": {
-													"type": "DateTime",
-													"value": {
-														"value": "@variables('TargetETLCutoffTime')",
-														"type": "Expression"
-													}
-												}
-											},
-											"queryTimeout": "02:00:00",
-											"partitionOption": "None"
-										},
-										"sink": {
-											"type": "AzureSqlSink",
-											"writeBehavior": "insert",
-											"sqlWriterUseTableLock": false
-										},
-										"enableStaging": false,
-										"translator": {
-											"type": "TabularTranslator",
-											"typeConversion": true,
-											"typeConversionSettings": {
-												"allowDataTruncation": true,
-												"treatBooleanAsNumber": false
-											}
-										}
-									},
-									"inputs": [
-										{
-											"referenceName": "OLTPforSps",
-											"type": "DatasetReference",
-											"parameters": {}
-										}
-									],
-									"outputs": [
-										{
-											"referenceName": "OLAP",
-											"type": "DatasetReference",
-											"parameters": {
-												"SchemaName": "Integration",
-												"Tablename": "@{item().Name}_Staging"
-											}
-										}
-									]
-								},
-								{
-									"name": "MigrateStagedTableData",
-									"type": "SqlServerStoredProcedure",
-									"dependsOn": [
-										{
-											"activity": "ExtractUpdatedDataToIntegration",
-											"dependencyConditions": [
-												"Succeeded"
-											]
-										}
-									],
-									"policy": {
-										"timeout": "7.00:00:00",
-										"retry": 0,
-										"retryIntervalInSeconds": 30,
-										"secureOutput": false,
-										"secureInput": false
-									},
-									"userProperties": [],
-									"typeProperties": {
-										"storedProcedureName": {
-											"value": "[[Integration].[MigrateStaged@{item().Name}Data]",
-											"type": "Expression"
-										}
-									},
-									"linkedServiceName": {
-										"referenceName": "OLAP",
-										"type": "LinkedServiceReference"
-									}
-								}
-							]
-						}
-					}
-				],
-				"policy": {
-					"elapsedTimeMetric": {},
-					"cancelAfter": {}
-				},
-				"variables": {
-					"TargetETLCutoffTime": {
-						"type": "String"
-					},
-					"LineageKey": {
-						"type": "String"
-					},
-					"TableName": {
-						"type": "String"
-					},
-					"LastETLCutoffTime": {
-						"type": "String"
-					}
-				},
-				"annotations": []
-			},
-			"dependsOn": [
-				"[concat(variables('factoryId'), '/datasets/OLTP')]",
-				"[concat(variables('factoryId'), '/linkedServices/OLAP')]",
-				"[concat(variables('factoryId'), '/datasets/DWforSPs')]",
-				"[concat(variables('factoryId'), '/datasets/OLTPforSps')]",
-				"[concat(variables('factoryId'), '/datasets/OLAP')]"
-			]
-		},
-		{
-			"name": "[concat(parameters('factoryName'), '/Bronze_To_Silver')]",
-			"type": "Microsoft.DataFactory/factories/dataflows",
-			"apiVersion": "2018-06-01",
-			"properties": {
-				"type": "MappingDataFlow",
-				"typeProperties": {
-					"sources": [
-						{
-							"dataset": {
-								"referenceName": "Movie_Bronze",
-								"type": "DatasetReference"
-							},
-							"name": "ingestBronze"
-						}
-					],
-					"sinks": [
-						{
-							"dataset": {
-								"referenceName": "Genres_silver",
-								"type": "DatasetReference"
-							},
-							"name": "saveSilverGenres"
-						},
-						{
-							"dataset": {
-								"referenceName": "Movie_silver",
-								"type": "DatasetReference"
-							},
-							"name": "saveSilverMovie"
-						},
-						{
-							"dataset": {
-								"referenceName": "Language_silver",
-								"type": "DatasetReference"
-							},
-							"name": "saveSilverLanguage"
-						},
-						{
-							"dataset": {
-								"referenceName": "Movie_Bronze",
-								"type": "DatasetReference"
-							},
-							"name": "saveBronzeMoive",
-							"description": "save Bronze table for clean movie dataset (loaded)"
-						},
-						{
-							"dataset": {
-								"referenceName": "movie_genre_junction_silver",
-								"type": "DatasetReference"
-							},
-							"name": "saveSilverJunction"
-						}
-					],
-					"transformations": [
-						{
-							"name": "bronzeDF",
-							"description": "SelectValueColumn"
-						},
-						{
-							"name": "bronzeAgumentedDFMovie",
-							"description": "Creating/updating the columns 'value, Id, Budget, Revenue, RunTime, Price, Title, Overview, Tagline, Imdburl, TmdbUrl, PosterUrl, BackdropUrl, ReleaseDate, p_CreatedDate, UpdatedDate, UpdatedBy, CreatedBy, Genres, Language_Id'.\n\nUpdating the minimum of Budget to 100,000"
-						},
-						{
-							"name": "parseGenres"
-						},
-						{
-							"name": "DistinctRowGenres"
-						},
-						{
-							"name": "filterNew"
-						},
-						{
-							"name": "split"
-						},
-						{
-							"name": "excludeValue"
-						},
-						{
-							"name": "selectLanguage"
-						},
-						{
-							"name": "selectGenres"
-						},
-						{
-							"name": "createKey"
-						},
-						{
-							"name": "DistinctRowLanguage"
-						},
-						{
-							"name": "litStatusLoaded"
-						},
-						{
-							"name": "DistinctRowMovie"
-						},
-						{
-							"name": "litStatusQuarantined"
-						},
-						{
-							"name": "DistinctRowMovieQ"
-						},
-						{
-							"name": "selectValueStatus"
-						},
-						{
-							"name": "join1"
-						},
-						{
-							"name": "selectBronzeColumn"
-						},
-						{
-							"name": "union1"
-						},
-						{
-							"name": "select1"
-						},
-						{
-							"name": "movieGenreID"
-						}
-					],
-					"scriptLines": [
-						"source(output(",
-						"          value as (BackdropUrl as string, Budget as double, CreatedBy as string, CreatedDate as string, Id as short, ImdbUrl as string, OriginalLanguage as string, Overview as string, PosterUrl as string, Price as double, ReleaseDate as string, Revenue as double, RunTime as short, Tagline as string, Title as string, TmdbUrl as string, UpdatedBy as string, UpdatedDate as string, genres as (id as short, name as string)[]),",
-						"          datasource as string,",
-						"          ingesttime as timestamp,",
-						"          status as string,",
-						"          ingestdate as date",
-						"     ),",
-						"     allowSchemaDrift: true,",
-						"     validateSchema: false,",
-						"     inferDriftedColumnTypes: true,",
-						"     ignoreNoFilesFound: false,",
-						"     format: 'parquet') ~> ingestBronze",
-						"filterNew select(mapColumn(",
-						"          value",
-						"     ),",
-						"     skipDuplicateMapInputs: true,",
-						"     skipDuplicateMapOutputs: true) ~> bronzeDF",
-						"select1 derive(value = value,",
-						"          Budget = case(Budget < 100000, 100000, toInteger(value.Budget)),",
-						"          ReleaseDate = toDate(ReleaseDate),",
-						"          CreatedDate = toDate(CreatedDate),",
-						"          Language_Id = 1) ~> bronzeAgumentedDFMovie",
-						"selectGenres select(mapColumn(",
-						"          Id = genres[1].id,",
-						"          Name = genres[1].name",
-						"     ),",
-						"     partitionBy('hash', 1),",
-						"     skipDuplicateMapInputs: true,",
-						"     skipDuplicateMapOutputs: true) ~> parseGenres",
-						"parseGenres aggregate(groupBy(Id),",
-						"     each(match(name!=\"Id\"), $$ = first($$))) ~> DistinctRowGenres",
-						"ingestBronze filter(status == \"new\") ~> filterNew",
-						"bronzeAgumentedDFMovie split(RunTime >= 0,",
-						"     disjoint: false) ~> split@(silverMovieClean, silverMovieQuarantined)",
-						"DistinctRowMovie select(mapColumn(",
-						"          Id,",
-						"          Budget,",
-						"          Revenue,",
-						"          RunTime,",
-						"          Price,",
-						"          Title,",
-						"          Overview,",
-						"          Tagline,",
-						"          ImdbUrl,",
-						"          TmdbUrl,",
-						"          PosterUrl,",
-						"          BackdropUrl,",
-						"          ReleaseDate,",
-						"          p_CreatedDate = CreatedDate,",
-						"          UpdatedDate,",
-						"          UpdatedBy,",
-						"          CreatedBy,",
-						"          Genres_Id = genres[1].id,",
-						"          Language_Id",
-						"     ),",
-						"     skipDuplicateMapInputs: true,",
-						"     skipDuplicateMapOutputs: true) ~> excludeValue",
-						"bronzeDF select(mapColumn(",
-						"          Language = value.OriginalLanguage",
-						"     ),",
-						"     skipDuplicateMapInputs: true,",
-						"     skipDuplicateMapOutputs: true) ~> selectLanguage",
-						"bronzeDF select(mapColumn(",
-						"          genres = value.genres",
-						"     ),",
-						"     skipDuplicateMapInputs: true,",
-						"     skipDuplicateMapOutputs: true) ~> selectGenres",
-						"selectLanguage window(over(Language),",
-						"     asc(Language, true),",
-						"     Id = rank()) ~> createKey",
-						"createKey aggregate(groupBy(Id),",
-						"     each(match(name!=\"Id\"), $$ = first($$))) ~> DistinctRowLanguage",
-						"DistinctRowMovie derive(status = \"loaded\") ~> litStatusLoaded",
-						"split@silverMovieClean aggregate(groupBy(Id),",
-						"     each(match(name!=\"Id\"), $$ = min($$))) ~> DistinctRowMovie",
-						"DistinctRowMovieQ derive(status = \"quarantined\") ~> litStatusQuarantined",
-						"split@silverMovieQuarantined aggregate(groupBy(Id),",
-						"     each(match(name!=\"Id\"), $$ = first($$))) ~> DistinctRowMovieQ",
-						"union1 select(mapColumn(",
-						"          value,",
-						"          status",
-						"     ),",
-						"     skipDuplicateMapInputs: true,",
-						"     skipDuplicateMapOutputs: true) ~> selectValueStatus",
-						"selectValueStatus, ingestBronze join(selectValueStatus@value.Id == ingestBronze@value.Id,",
-						"     joinType:'inner',",
-						"     matchType:'exact',",
-						"     ignoreSpaces: false,",
-						"     broadcast: 'auto')~> join1",
-						"join1 select(mapColumn(",
-						"          value = selectValueStatus@value,",
-						"          datasource,",
-						"          ingesttime,",
-						"          status = selectValueStatus@status,",
-						"          ingestdate",
-						"     ),",
-						"     skipDuplicateMapInputs: true,",
-						"     skipDuplicateMapOutputs: true) ~> selectBronzeColumn",
-						"litStatusLoaded, litStatusQuarantined union(byName: false)~> union1",
-						"bronzeDF select(mapColumn(",
-						"          value,",
-						"          BackdropUrl = value.BackdropUrl,",
-						"          Budget = value.Budget,",
-						"          CreatedBy = value.CreatedBy,",
-						"          CreatedDate = value.CreatedDate,",
-						"          Id = value.Id,",
-						"          ImdbUrl = value.ImdbUrl,",
-						"          Overview = value.Overview,",
-						"          PosterUrl = value.PosterUrl,",
-						"          Price = value.Price,",
-						"          ReleaseDate = value.ReleaseDate,",
-						"          Revenue = value.Revenue,",
-						"          RunTime = value.RunTime,",
-						"          Tagline = value.Tagline,",
-						"          Title = value.Title,",
-						"          TmdbUrl = value.TmdbUrl,",
-						"          UpdatedBy = value.UpdatedBy,",
-						"          UpdatedDate = value.UpdatedDate,",
-						"          genres = value.genres",
-						"     ),",
-						"     skipDuplicateMapInputs: true,",
-						"     skipDuplicateMapOutputs: true) ~> select1",
-						"DistinctRowMovie select(mapColumn(",
-						"          Movie_Id = value.Id,",
-						"          Genres_Id = genres[1].id",
-						"     ),",
-						"     skipDuplicateMapInputs: true,",
-						"     skipDuplicateMapOutputs: true) ~> movieGenreID",
-						"DistinctRowGenres sink(allowSchemaDrift: true,",
-						"     validateSchema: false,",
-						"     format: 'parquet',",
-						"     truncate: true,",
-						"     skipDuplicateMapInputs: true,",
-						"     skipDuplicateMapOutputs: true,",
-						"     saveOrder: 0,",
-						"     partitionBy('hash', 1),",
-						"     preCommands: ['rm -f /result/silver/Genres/*'],",
-						"     postCommands: []) ~> saveSilverGenres",
-						"excludeValue sink(allowSchemaDrift: true,",
-						"     validateSchema: false,",
-						"     format: 'parquet',",
-						"     truncate: true,",
-						"     skipDuplicateMapInputs: true,",
-						"     skipDuplicateMapOutputs: true,",
-						"     saveOrder: 2,",
-						"     partitionBy('hash', 1),",
-						"     preCommands: ['rm -f /result/silver/Movie/*'],",
-						"     postCommands: []) ~> saveSilverMovie",
-						"DistinctRowLanguage sink(allowSchemaDrift: true,",
-						"     validateSchema: false,",
-						"     format: 'parquet',",
-						"     truncate: true,",
-						"     skipDuplicateMapInputs: true,",
-						"     skipDuplicateMapOutputs: true,",
-						"     saveOrder: 1,",
-						"     partitionBy('hash', 1),",
-						"     preCommands: ['rm -f /result/silver/Language/*'],",
-						"     postCommands: []) ~> saveSilverLanguage",
-						"selectBronzeColumn sink(allowSchemaDrift: true,",
-						"     validateSchema: true,",
-						"     format: 'parquet',",
-						"     truncate: true,",
-						"     skipDuplicateMapInputs: true,",
-						"     skipDuplicateMapOutputs: true,",
-						"     saveOrder: 3,",
-						"     partitionBy('hash', 1),",
-						"     preCommands: [],",
-						"     postCommands: []) ~> saveBronzeMoive",
-						"movieGenreID sink(allowSchemaDrift: true,",
-						"     validateSchema: false,",
-						"     format: 'parquet',",
-						"     truncate: true,",
-						"     skipDuplicateMapInputs: true,",
-						"     skipDuplicateMapOutputs: true,",
-						"     partitionBy('hash', 1)) ~> saveSilverJunction"
-					]
-				}
-			},
-			"dependsOn": [
-				"[concat(variables('factoryId'), '/datasets/Movie_Bronze')]",
-				"[concat(variables('factoryId'), '/datasets/Genres_silver')]",
-				"[concat(variables('factoryId'), '/datasets/Movie_silver')]",
-				"[concat(variables('factoryId'), '/datasets/Language_silver')]",
-				"[concat(variables('factoryId'), '/datasets/movie_genre_junction_silver')]"
-			]
-		},
-		{
-			"name": "[concat(parameters('factoryName'), '/Raw_To_Bronze')]",
-			"type": "Microsoft.DataFactory/factories/dataflows",
-			"apiVersion": "2018-06-01",
-			"properties": {
-				"type": "MappingDataFlow",
-				"typeProperties": {
-					"sources": [
-						{
-							"dataset": {
-								"referenceName": "Movie_json",
-								"type": "DatasetReference"
-							},
-							"name": "IngestRawMovie"
-						}
-					],
-					"sinks": [
-						{
-							"dataset": {
-								"referenceName": "Movie_Bronze",
-								"type": "DatasetReference"
-							},
-							"name": "SaveToBronze",
-							"rejectedDataLinkedService": {
-								"referenceName": "MovieBlobStorage",
-								"type": "LinkedServiceReference"
-							}
-						}
-					],
-					"transformations": [
-						{
-							"name": "flattenValues"
-						},
-						{
-							"name": "MetaData"
-						}
-					],
-					"scriptLines": [
-						"source(output(",
-						"          movie as (Id as integer, Title as string, Overview as string, Tagline as string, Budget as double, Revenue as double, ImdbUrl as string, TmdbUrl as string, PosterUrl as string, BackdropUrl as string, OriginalLanguage as string, ReleaseDate as string, RunTime as integer, Price as double, CreatedDate as string, UpdatedDate as string, UpdatedBy as string, CreatedBy as string, genres as (id as integer, name as string)[])[]",
-						"     ),",
-						"     allowSchemaDrift: true,",
-						"     validateSchema: false,",
-						"     inferDriftedColumnTypes: true,",
-						"     ignoreNoFilesFound: false,",
-						"     documentForm: 'arrayOfDocuments') ~> IngestRawMovie",
-						"IngestRawMovie foldDown(unroll(movie, movie),",
-						"     mapColumn(",
-						"          value = movie",
-						"     ),",
-						"     skipDuplicateMapInputs: false,",
-						"     skipDuplicateMapOutputs: false) ~> flattenValues",
-						"flattenValues derive(value = value,",
-						"          datasource = \"antraMovie\",",
-						"          ingesttime = currentTimestamp(),",
-						"          status = \"New\",",
-						"          ingestdate = currentDate()) ~> MetaData",
-						"MetaData sink(allowSchemaDrift: true,",
-						"     validateSchema: true,",
-						"     format: 'parquet',",
-						"     skipDuplicateMapInputs: true,",
-						"     skipDuplicateMapOutputs: true,",
-						"     saveOrder: 0,",
-						"     partitionBy('hash', 1)) ~> SaveToBronze"
-					]
-				}
-			},
-			"dependsOn": [
-				"[concat(variables('factoryId'), '/datasets/Movie_json')]",
-				"[concat(variables('factoryId'), '/datasets/Movie_Bronze')]",
-				"[concat(variables('factoryId'), '/linkedServices/MovieBlobStorage')]"
+				"[concat(variables('factoryId'), '/linkedServices/ODS')]"
 			]
 		}
 	]
