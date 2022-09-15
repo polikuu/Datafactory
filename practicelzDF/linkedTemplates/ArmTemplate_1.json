@@ -1339,7 +1339,7 @@
 							"waitOnCompletion": true,
 							"parameters": {
 								"inputDate": {
-									"value": "@utcnow()",
+									"value": "@pipeline().parameters.inputDate",
 									"type": "Expression"
 								}
 							}
