@@ -1,8 +1,8 @@
 {
-	"name": "DWforSPs",
+	"name": "Integration",
 	"properties": {
 		"linkedServiceName": {
-			"referenceName": "OLAP",
+			"referenceName": "Integration",
 			"type": "LinkedServiceReference"
 		},
 		"annotations": [],

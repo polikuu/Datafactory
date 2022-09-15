@@ -1,8 +1,8 @@
 {
-	"name": "OLTPforSps",
+	"name": "ODS",
 	"properties": {
 		"linkedServiceName": {
-			"referenceName": "AzureSqlDatabase3",
+			"referenceName": "ODS",
 			"type": "LinkedServiceReference"
 		},
 		"annotations": [],

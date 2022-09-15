@@ -167,7 +167,7 @@
 									"partitionOption": "None"
 								},
 								"dataset": {
-									"referenceName": "DWforSPs",
+									"referenceName": "Integration",
 									"type": "DatasetReference"
 								}
 							}
@@ -208,7 +208,7 @@
 									"partitionOption": "None"
 								},
 								"dataset": {
-									"referenceName": "DWforSPs",
+									"referenceName": "Integration",
 									"type": "DatasetReference"
 								}
 							}
@@ -295,13 +295,13 @@
 							},
 							"inputs": [
 								{
-									"referenceName": "OLTPforSps",
+									"referenceName": "ODS",
 									"type": "DatasetReference"
 								}
 							],
 							"outputs": [
 								{
-									"referenceName": "OLAP",
+									"referenceName": "DW",
 									"type": "DatasetReference",
 									"parameters": {
 										"SchemaName": "Integration",

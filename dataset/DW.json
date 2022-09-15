@@ -1,5 +1,5 @@
 {
-	"name": "OLAP",
+	"name": "DW",
 	"properties": {
 		"linkedServiceName": {
 			"referenceName": "OLAP",

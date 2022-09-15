@@ -29,6 +29,12 @@
 				}
 			}
 		],
+		"parameters": {
+			"inputDate": {
+				"type": "string",
+				"defaultValue": "'9/15/2022'"
+			}
+		},
 		"annotations": []
 	}
 }
