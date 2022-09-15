@@ -73,7 +73,7 @@
 					}
 				},
 				"linkedServiceName": {
-					"referenceName": "OLAP",
+					"referenceName": "Integration",
 					"type": "LinkedServiceReference"
 				}
 			},
@@ -116,7 +116,7 @@
 							},
 							"userProperties": [],
 							"linkedServiceName": {
-								"referenceName": "OLAP",
+								"referenceName": "DW",
 								"type": "LinkedServiceReference"
 							},
 							"typeProperties": {
@@ -336,7 +336,7 @@
 								}
 							},
 							"linkedServiceName": {
-								"referenceName": "OLAP",
+								"referenceName": "DW",
 								"type": "LinkedServiceReference"
 							}
 						}
@@ -355,6 +355,9 @@
 				"type": "String"
 			},
 			"LastETLCutoffTime": {
+				"type": "String"
+			},
+			"inputDate": {
 				"type": "String"
 			}
 		},

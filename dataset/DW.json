@@ -2,7 +2,7 @@
 	"name": "DW",
 	"properties": {
 		"linkedServiceName": {
-			"referenceName": "OLAP",
+			"referenceName": "DW",
 			"type": "LinkedServiceReference"
 		},
 		"parameters": {
