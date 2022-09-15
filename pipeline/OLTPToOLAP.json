@@ -10,7 +10,7 @@
 				"typeProperties": {
 					"variableName": "TargetETLCutoffTime",
 					"value": {
-						"value": "@utcnow()",
+						"value": "@pipeline().parameters.yyy",
 						"type": "Expression"
 					}
 				}
@@ -344,6 +344,11 @@
 				}
 			}
 		],
+		"parameters": {
+			"yyy": {
+				"type": "string"
+			}
+		},
 		"variables": {
 			"TargetETLCutoffTime": {
 				"type": "String"
@@ -355,9 +360,6 @@
 				"type": "String"
 			},
 			"LastETLCutoffTime": {
-				"type": "String"
-			},
-			"inputDate": {
 				"type": "String"
 			}
 		},
