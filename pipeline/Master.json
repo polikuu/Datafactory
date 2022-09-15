@@ -14,31 +14,18 @@
 					},
 					"waitOnCompletion": true,
 					"parameters": {
-						"yyy": {
+						"inputDate": {
 							"value": "@utcnow()",
 							"type": "Expression"
 						}
 					}
-				}
-			},
-			{
-				"name": "movies",
-				"type": "ExecutePipeline",
-				"dependsOn": [],
-				"userProperties": [],
-				"typeProperties": {
-					"pipeline": {
-						"referenceName": "movies",
-						"type": "PipelineReference"
-					},
-					"waitOnCompletion": true
 				}
 			}
 		],
 		"parameters": {
 			"inputDate": {
 				"type": "string",
-				"defaultValue": "09/15/2022"
+				"defaultValue": "2022-09-01T13:45:30"
 			}
 		},
 		"annotations": []

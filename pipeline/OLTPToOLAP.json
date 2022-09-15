@@ -10,7 +10,7 @@
 				"typeProperties": {
 					"variableName": "TargetETLCutoffTime",
 					"value": {
-						"value": "@pipeline().parameters.yyy",
+						"value": "@pipeline().parameters.inputDate",
 						"type": "Expression"
 					}
 				}
@@ -345,7 +345,7 @@
 			}
 		],
 		"parameters": {
-			"yyy": {
+			"inputDate": {
 				"type": "string"
 			}
 		},
