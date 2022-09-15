@@ -121,6 +121,20 @@
 								}
 							}
 						}
+					},
+					{
+						"name": "movies",
+						"type": "ExecutePipeline",
+						"dependsOn": [],
+						"userProperties": [],
+						"typeProperties": {
+							"pipeline": {
+								"referenceName": "movies",
+								"type": "PipelineReference"
+							},
+							"waitOnCompletion": true,
+							"parameters": {}
+						}
 					}
 				],
 				"policy": {
@@ -136,7 +150,8 @@
 				"annotations": []
 			},
 			"dependsOn": [
-				"[concat(variables('factoryId'), '/pipelines/OLTPToOLAP')]"
+				"[concat(variables('factoryId'), '/pipelines/OLTPToOLAP')]",
+				"[concat(variables('factoryId'), '/pipelines/movies')]"
 			]
 		},
 		{

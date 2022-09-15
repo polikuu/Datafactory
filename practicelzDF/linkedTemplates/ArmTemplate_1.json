@@ -1321,48 +1321,6 @@
 			]
 		},
 		{
-			"name": "[concat(parameters('factoryName'), '/Master')]",
-			"type": "Microsoft.DataFactory/factories/pipelines",
-			"apiVersion": "2018-06-01",
-			"properties": {
-				"activities": [
-					{
-						"name": "OLTPToOLAP",
-						"type": "ExecutePipeline",
-						"dependsOn": [],
-						"userProperties": [],
-						"typeProperties": {
-							"pipeline": {
-								"referenceName": "OLTPToOLAP",
-								"type": "PipelineReference"
-							},
-							"waitOnCompletion": true,
-							"parameters": {
-								"inputDate": {
-									"value": "@pipeline().parameters.inputDate",
-									"type": "Expression"
-								}
-							}
-						}
-					}
-				],
-				"policy": {
-					"elapsedTimeMetric": {},
-					"cancelAfter": {}
-				},
-				"parameters": {
-					"inputDate": {
-						"type": "string",
-						"defaultValue": "2022-09-01T13:45:30"
-					}
-				},
-				"annotations": []
-			},
-			"dependsOn": [
-				"[concat(variables('factoryId'), '/pipelines/OLTPToOLAP')]"
-			]
-		},
-		{
 			"name": "[concat(parameters('factoryName'), '/QuarantinedBronzeToSilver')]",
 			"type": "Microsoft.DataFactory/factories/pipelines",
 			"apiVersion": "2018-06-01",
@@ -1551,6 +1509,63 @@
 			"dependsOn": [
 				"[concat(variables('factoryId'), '/pipelines/RawToBronzeToSilver')]",
 				"[concat(variables('factoryId'), '/pipelines/QuarantinedBronzeToSilver')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/Master')]",
+			"type": "Microsoft.DataFactory/factories/pipelines",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"activities": [
+					{
+						"name": "OLTPToOLAP",
+						"type": "ExecutePipeline",
+						"dependsOn": [],
+						"userProperties": [],
+						"typeProperties": {
+							"pipeline": {
+								"referenceName": "OLTPToOLAP",
+								"type": "PipelineReference"
+							},
+							"waitOnCompletion": true,
+							"parameters": {
+								"inputDate": {
+									"value": "@pipeline().parameters.inputDate",
+									"type": "Expression"
+								}
+							}
+						}
+					},
+					{
+						"name": "movies",
+						"type": "ExecutePipeline",
+						"dependsOn": [],
+						"userProperties": [],
+						"typeProperties": {
+							"pipeline": {
+								"referenceName": "movies",
+								"type": "PipelineReference"
+							},
+							"waitOnCompletion": true,
+							"parameters": {}
+						}
+					}
+				],
+				"policy": {
+					"elapsedTimeMetric": {},
+					"cancelAfter": {}
+				},
+				"parameters": {
+					"inputDate": {
+						"type": "string",
+						"defaultValue": "2022-09-01T13:45:30"
+					}
+				},
+				"annotations": []
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/pipelines/OLTPToOLAP')]",
+				"[concat(variables('factoryId'), '/pipelines/movies')]"
 			]
 		}
 	]
