@@ -12,7 +12,13 @@
 						"referenceName": "OLTPToOLAP",
 						"type": "PipelineReference"
 					},
-					"waitOnCompletion": true
+					"waitOnCompletion": true,
+					"parameters": {
+						"yyy": {
+							"value": "@utcnow()",
+							"type": "Expression"
+						}
+					}
 				}
 			},
 			{
@@ -32,7 +38,7 @@
 		"parameters": {
 			"inputDate": {
 				"type": "string",
-				"defaultValue": "'9/15/2022'"
+				"defaultValue": "09/15/2022"
 			}
 		},
 		"annotations": []
