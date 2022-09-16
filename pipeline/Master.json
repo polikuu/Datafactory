@@ -3,13 +3,13 @@
 	"properties": {
 		"activities": [
 			{
-				"name": "OLTPToOLAP",
+				"name": "OLTPToDW",
 				"type": "ExecutePipeline",
 				"dependsOn": [],
 				"userProperties": [],
 				"typeProperties": {
 					"pipeline": {
-						"referenceName": "OLTPToOLAP",
+						"referenceName": "OLTPToDW",
 						"type": "PipelineReference"
 					},
 					"waitOnCompletion": true,
